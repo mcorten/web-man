@@ -1,0 +1,73 @@
+<div class="send-request">
+  <h3>Connect to server</h3>
+  <form [formGroup]="connectForm" (submit)="connectFormSubmit()" class="example-form"
+        style="display: flex; flex-direction: column;">
+
+    <mat-form-field>
+      <mat-label>Server host</mat-label>
+      <input
+        matInput
+        type="text"
+        [formControl]="connectForm.controls.host"
+        placeholder="Ex. websocket.example.com">
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Server name</mat-label>
+      <input
+        matInput
+        type="text"
+        [formControl]="connectForm.controls.name"
+        placeholder="Ex. Websocket example">
+    </mat-form-field>
+
+    <div style="position: relative;">
+      <button
+        mat-raised-button
+        color="primary"
+
+        [disabled]="(loading | async) ?? false"
+
+        style="width: 100%;"
+      >
+        Connect
+      </button>
+      <mat-progress-bar
+        *ngIf="loading | async"
+        color="accent"
+        mode="indeterminate"
+        style="position: absolute; bottom: 1px;"
+      ></mat-progress-bar>
+    </div>
+  </form>
+</div>
+
+<div class="history">
+  <ng-container *ngIf="history | async as _history">
+    <mat-card class="server" *ngFor="let server of _history.list">
+      <mat-card-header>
+        <mat-card-title>
+          {{ server.name }}
+          <ng-container *ngIf="server.name !== server.host">({{ server.host }})</ng-container>
+        </mat-card-title>
+
+      </mat-card-header>
+      <mat-card-actions>
+        <button
+          mat-raised-button
+          (click)="connectFromHistory(server)"
+        >
+          Connect
+        </button>
+        <button
+          *ngIf="server.id"
+          mat-raised-button
+          (click)="removeHistory(server.id)"
+        >
+          <mat-icon aria-hidden="false" aria-label="Example home icon" fontIcon="delete_outline"></mat-icon>
+
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+  </ng-container>
+</div>

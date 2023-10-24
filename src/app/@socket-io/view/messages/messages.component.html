@@ -1,0 +1,172 @@
+<div class="send-request">
+  <ng-container *ngIf="messages | async as _messageCollection">
+    <div style="flex-grow: 2;" *ngIf="_messageCollection.length > 0">
+      <app-message-list
+        [messageCollection]="_messageCollection"
+        (duplicateMessage)="duplicateMessage($event)"
+      ></app-message-list>
+    </div>
+  </ng-container>
+
+  <div style="flex-grow: 1">
+    <h3>Send message</h3>
+    <form
+      class="form"
+      [formGroup]="sendRequestForm"
+      (submit)="requestForm()"
+    >
+      <mat-form-field>
+        <mat-label>Name</mat-label>
+        <input
+          matInput
+          type="text"
+          [formControl]="sendRequestForm.controls.name"
+          placeholder="Ex. Enable item (acceptance)">
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Event</mat-label>
+        <input
+          matInput
+          type="text"
+          [formControl]="sendRequestForm.controls.event"
+          placeholder="Ex. Test">
+      </mat-form-field>
+      <mat-form-field class="body">
+        <mat-label>Body</mat-label>
+        <textarea
+          matInput
+          cdkTextareaAutosize
+          type="text"
+          [formControl]="sendRequestForm.controls.body"
+          placeholder='Ex. {"foo": "bar"}'>
+        </textarea>
+      </mat-form-field>
+
+      <div style="position: relative;">
+        <button
+          mat-raised-button
+          color="primary"
+          style="width: 100%;"
+        >
+          Send message
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="history">
+  <div class="category-title">
+    <h3>History</h3>
+    <div
+      class="action"
+    >
+    <mat-icon
+      *ngIf="((showHistory | async) ?? []).length > 0"
+      (click)="removeAllHistory()"
+      aria-hidden="false"
+      aria-label="Remove history message"
+      fontIcon="delete_outline"></mat-icon>
+    </div>
+  </div>
+  <ng-container *ngIf="showHistory | async as _history">
+    <div class="message" *ngFor="let h of _history">
+      <mat-accordion multi>
+        <mat-expansion-panel *ngIf="h.request">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Request
+            </mat-panel-title>
+            <mat-panel-description class="description">
+              <span class="name">
+                {{ h.request.event }}
+              </span>
+              <div class="action">
+                <button
+                  *ngIf="isString(h.request.body)"
+                  mat-icon-button
+                  [cdkCopyToClipboard]="h.request.body"
+                  (click)="$event.stopPropagation();"
+                >
+                  <mat-icon
+                    aria-hidden="false"
+                    aria-label="Copy history request to clipboard"
+                    fontIcon="content_copy"
+                  ></mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="$event.stopPropagation(); removeHistoryMessage(h.id)"
+                >
+                  <mat-icon aria-hidden="false" aria-label="Remove history message" fontIcon="delete_outline"></mat-icon>
+                </button>
+              </div>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <app-json-view
+            [data]="h.request.body"
+          ></app-json-view>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel *ngIf="h.reply">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span *ngIf="h.isRequestReply">
+                Reply
+              </span>
+              <span *ngIf="h.isUpdate">
+                Update
+              </span>
+            </mat-panel-title>
+            <mat-panel-description
+              class="description"
+            >
+              <span
+                class="name"
+              >
+                {{ h.reply.event }}
+              </span>
+              <div
+                class="action"
+              >
+                <button
+                  *ngIf="isString(h.reply.body)"
+                  mat-icon-button
+                  [cdkCopyToClipboard]="h.reply.body"
+                  (click)="$event.stopPropagation();"
+                >
+                  <mat-icon
+                    *ngIf="h.isRequestReply"
+                    aria-hidden="false"
+                    aria-label="Copy history reply to clipboard"
+                    fontIcon="content_copy"
+                  ></mat-icon>
+                  <mat-icon
+                    *ngIf="h.isUpdate"
+                    aria-hidden="false"
+                    aria-label="Copy history update to clipboard"
+                    fontIcon="content_copy"
+                  ></mat-icon>
+                </button>
+                <button
+                  [style.visibility]="(h.isRequestReply) ? 'hidden' : 'inherit'"
+                  mat-icon-button
+                  (click)="$event.stopPropagation(); removeHistoryMessage(h.id)"
+                >
+                  <mat-icon
+                    aria-hidden="false"
+                    aria-label="Remove history message"
+                    fontIcon="delete_outline"
+                  ></mat-icon>
+                </button>
+              </div>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <app-json-view
+            [data]="h.reply.body"
+          ></app-json-view>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+  </ng-container>
+</div>

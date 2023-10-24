@@ -1,0 +1,38 @@
+:host {
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 992px) {
+    flex-direction: row;
+  }
+
+  width: 100%;
+  height: calc(100% - 74px);
+
+  .send-request {
+    display: flex;
+    flex-direction: column;
+
+    .body {
+      flex-grow: 1;
+    }
+
+    width: 100%;
+
+    @media (min-width: 992px) {
+      width: 400px;
+
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+  }
+
+  .history {
+    flex-grow: 1;
+
+    .server {
+      margin-bottom: 15px;
+    }
+  }
+
+}
