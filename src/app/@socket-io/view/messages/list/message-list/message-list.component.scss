@@ -1,0 +1,32 @@
+:host {
+  .item-content {
+    display: flex;
+    flex-direction: row;
+    flex-flow: row nowrap;
+
+    align-items: center;
+    justify-content: center;
+
+    .mat-icon {
+      margin-right: 1rem;
+    }
+
+    .name {
+      flex-grow: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .mat-mdc-menu-trigger {
+
+    }
+  }
+
+  mat-icon {
+    flex-grow: 0;
+    cursor: pointer;
+    min-width: 24px;
+    min-height: 24px;
+  }
+}

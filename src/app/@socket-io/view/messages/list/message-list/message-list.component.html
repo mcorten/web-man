@@ -1,0 +1,57 @@
+<h3>Messages</h3>
+
+<mat-list>
+  <mat-list-item
+    *ngFor="let message of messageCollection"
+  >
+    <div class="item-content">
+      <mat-icon
+        aria-hidden="false"
+        aria-label="Send request"
+        fontIcon="mail_outline"
+        (click)="$event.stopPropagation(); request(message.event, message.body)"
+      ></mat-icon>
+      <mat-icon
+        aria-hidden="false"
+        aria-label="Send request"
+        fontIcon="mode_edit_outline"
+        (click)="$event.stopPropagation(); duplicateMessage.emit({messageId: message.id})"
+      ></mat-icon>
+      <span
+        matTooltip="{{message.name}}"
+        class="name"
+      >
+        {{message.name}}
+      </span>
+      <button mat-icon-button (click)="$event.stopPropagation()" [matMenuTriggerFor]="menu"
+              aria-label="Example icon-button with a menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+    </div>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="request(message.event, message.body)">
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Remove request"
+        >mail_outline</mat-icon>
+        <span>Send</span>
+      </button>
+      <button mat-menu-item (click)="duplicateMessage.emit({messageId: message.id})">
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Remove request"
+        >mode_edit_outline</mat-icon>
+        <span>Edit request</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="removeMessage(message.id)">
+        <mat-icon
+          aria-hidden="false"
+          aria-label="Remove request"
+        >delete_outline</mat-icon>
+        <span>Remove</span>
+      </button>
+    </mat-menu>
+  </mat-list-item>
+</mat-list>
+
