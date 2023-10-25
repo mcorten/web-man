@@ -11,6 +11,7 @@ import { HISTORY_STORE_LIST, HistoryStore } from "@shared-kernel/socket-io";
 import { HistoryMessage } from "@shared-kernel/socket-io/application/contract/history-message.interface";
 import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contract/history-store-detail.token";
 import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
+import { Message } from "@shared-kernel/database";
 
 
 @Component({
@@ -48,6 +49,10 @@ export class MessagesComponent implements OnInit {
     )
   }
 
+  private sortAlphabetically = (a: Message,b: Message) => {
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  };
+
   protected messages = this.messageList.handle()
     .pipe(
       tap(collection => {
@@ -55,6 +60,7 @@ export class MessagesComponent implements OnInit {
           this.drawerOpen.next(true);
         }
       }),
+      map(v => v.sort(this.sortAlphabetically)),
       shareReplay(1)
     );
 
