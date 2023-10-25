@@ -1,15 +1,16 @@
-import {ChangeDetectionStrategy, Component, Inject, OnInit} from '@angular/core';
-import {FormControl, FormGroup, Validators} from "@angular/forms";
-import {SOCKET_IO_CONTROLLER} from "@shared-kernel/socket-io/application/contract/controller.token";
-import {SocketIoGateway} from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
+import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { SOCKET_IO_CONTROLLER } from "@shared-kernel/socket-io/application/contract/controller.token";
+import { SocketIoGateway } from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
 import { BehaviorSubject, first, map, Observable, shareReplay, takeWhile, tap } from "rxjs";
-import {Router} from "@angular/router";
-import {MessageAddHandler} from "@message/application/handler/message-add.handler";
-import {WantsToAddMessage} from "@message/application/use-case/wants-to-add-message.use-case";
-import {MessageListHandler} from "@message/application/handler/message-list.handler";
-import {HISTORY_STORE, HistoryStore} from "@shared-kernel/socket-io";
-import {HistoryMessage} from "@shared-kernel/socket-io/application/contract/history-message.interface";
-import { Message } from "@shared-kernel/database";
+import { Router } from "@angular/router";
+import { MessageAddHandler } from "@message/application/handler/message-add.handler";
+import { WantsToAddMessage } from "@message/application/use-case/wants-to-add-message.use-case";
+import { MessageListHandler } from "@message/application/handler/message-list.handler";
+import { HISTORY_STORE_LIST, HistoryStore } from "@shared-kernel/socket-io";
+import { HistoryMessage } from "@shared-kernel/socket-io/application/contract/history-message.interface";
+import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contract/history-store-detail.token";
+import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
 
 
 @Component({
@@ -29,17 +30,23 @@ export class MessagesComponent implements OnInit {
     }
   )
 
-  protected showHistory: Observable<Array<HistoryMessage & {isUpdate: boolean, isRequestReply: boolean}>> = this._history.get().pipe(
-    map(historyCollection => historyCollection.map(item => {
-      return {
-        ...item,
-        isUpdate: item.request === undefined,
-        isRequestReply: item.request !== undefined
-      }
-    })),
-    map(historyCollection => [...historyCollection].reverse()),
-    shareReplay(1)
-  );
+  protected showHistory: Observable<Array<HistoryMessage['id']>> = this._history.get()
+    .pipe(
+      map(historyCollection => [...historyCollection].reverse()),
+      shareReplay(1)
+    );
+
+  protected historyDetail(id: string): Observable<HistoryMessage & {isUpdate: boolean, isRequestReply: boolean}> {
+    return this._historyDetail.get(id).pipe(
+      map(detail => {
+        return  {
+          ...detail,
+          isUpdate: detail.request === undefined,
+          isRequestReply: detail.request !== undefined
+        }
+      })
+    )
+  }
 
   protected messages = this.messageList.handle()
     .pipe(
@@ -55,7 +62,8 @@ export class MessagesComponent implements OnInit {
     protected readonly messageList: MessageListHandler,
     private readonly messageAdd: MessageAddHandler,
     @Inject(SOCKET_IO_CONTROLLER) private readonly connection: SocketIoGateway,
-    @Inject(HISTORY_STORE) private readonly _history: HistoryStore,
+    @Inject(HISTORY_STORE_LIST) private readonly _history: HistoryStore,
+    @Inject(HISTORY_DETAIL_STORE) private readonly _historyDetail: HistoryDetailStore,
     private readonly router: Router
   ) {
   }
@@ -109,13 +117,21 @@ export class MessagesComponent implements OnInit {
 
   protected removeHistoryMessage(id: string) {
     const current = this._history.value()
-      .filter(historyMessage => historyMessage.id !== id);
+      .filter(_id => _id !== id);
 
     this._history.set(current);
+    this._historyDetail.remove(id);
   }
 
   protected removeAllHistory() {
+    const current = this._history.value();
+
     this._history.set([]);
+    current.forEach(
+      _id => {
+        this._historyDetail.remove(_id)
+      }
+    );
   }
 
   protected duplicateMessage($event: { messageId: number }) {

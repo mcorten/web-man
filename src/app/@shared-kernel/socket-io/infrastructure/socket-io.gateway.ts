@@ -1,10 +1,12 @@
-import {io, Socket} from "socket.io-client";
-import {SocketIoGatewayContract} from "../application/contract/gateway.contract";
-import {BehaviorSubject} from "rxjs";
-import {Inject} from "@angular/core";
-import {HISTORY_STORE, HistoryStore} from "@shared-kernel/socket-io";
-import {HistoryMessage} from "@shared-kernel/socket-io/application/contract/history-message.interface";
-import {v4 as uuidv4} from "uuid";
+import { io, Socket } from "socket.io-client";
+import { SocketIoGatewayContract } from "../application/contract/gateway.contract";
+import { BehaviorSubject } from "rxjs";
+import { Inject } from "@angular/core";
+import { HISTORY_STORE_LIST, HistoryStore } from "@shared-kernel/socket-io";
+import { HistoryMessage } from "../application/contract/history-message.interface";
+import { v4 as uuidv4 } from "uuid";
+import { HISTORY_DETAIL_STORE } from "../application/contract/history-store-detail.token";
+import { HistoryDetailStore } from "../application/contract/history-store-detail.type";
 
 export type socketHealth = 'connected' | 'connecting' | 'disconnected';
 
@@ -14,7 +16,10 @@ export class SocketIoGateway implements SocketIoGatewayContract{
   private readonly _health = new BehaviorSubject<socketHealth>("disconnected");
   public readonly health = this._health.asObservable();
 
-  public constructor(@Inject(HISTORY_STORE) private readonly _history: HistoryStore,) {
+  public constructor(
+    @Inject(HISTORY_STORE_LIST) private readonly _history: HistoryStore,
+    @Inject(HISTORY_DETAIL_STORE) private readonly _historyDetail: HistoryDetailStore,
+  ) {
   }
 
   public connect(contract: {
@@ -69,8 +74,18 @@ export class SocketIoGateway implements SocketIoGatewayContract{
           body: message
         }
       };
-      this._history.set([...this._history.value()].concat([makeHistory]));
+
+      this.addToHistory(makeHistory);
     })
+  }
+
+  private addToHistory(message: HistoryMessage) {
+    this._historyDetail.set(message, message.id);
+
+    const current = this._history.value();
+    current.push(message.id);
+    this._history.set(current);
+
   }
 
   public request(contract: {
@@ -91,19 +106,10 @@ export class SocketIoGateway implements SocketIoGatewayContract{
             body: reply
           }
         };
-        this._history.set([...this._history.value()].concat([makeHistory]));
+        this.addToHistory(makeHistory);
 
         contract.acknowledge(reply);
       }
     });
-  }
-
-  public listen(listener: (e: {event: unknown, message: unknown}) => void) {
-    this.connection.onAny((event, message) => {
-      listener({
-        event,
-        message
-      })
-    })
   }
 }
