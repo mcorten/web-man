@@ -26,25 +26,32 @@
   .send-request {
     display: flex;
     flex-direction: column;
+    height: 100%;
 
     padding-right: 5px;
     margin-right: 5px;
     border-right: 1px solid var(--mat-toolbar-container-background-color);
 
-    height: calc(100% - 74px);
+    .mat-drawer-container {
+      min-height: 800px;
+    }
+    mat-drawer {
+      width: 100%;
+      min-height: 500px;
+
+    }
 
     .form {
       display: flex;
       flex-direction: column;
-      height: 100%;
+
+      button {
+        width: 100%;
+      }
     }
 
     .mat-mdc-tab-body-wrapper {
       height: 100%;
-    }
-
-    .body {
-      flex-grow: 1;
     }
 
     width: 100%;

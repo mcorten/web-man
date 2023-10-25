@@ -2,13 +2,14 @@ import {ChangeDetectionStrategy, Component, Inject, OnInit} from '@angular/core'
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {SOCKET_IO_CONTROLLER} from "@shared-kernel/socket-io/application/contract/controller.token";
 import {SocketIoGateway} from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
-import {first, map, Observable, shareReplay, takeWhile} from "rxjs";
+import { BehaviorSubject, first, map, Observable, shareReplay, takeWhile, tap } from "rxjs";
 import {Router} from "@angular/router";
 import {MessageAddHandler} from "@message/application/handler/message-add.handler";
 import {WantsToAddMessage} from "@message/application/use-case/wants-to-add-message.use-case";
 import {MessageListHandler} from "@message/application/handler/message-list.handler";
 import {HISTORY_STORE, HistoryStore} from "@shared-kernel/socket-io";
 import {HistoryMessage} from "@shared-kernel/socket-io/application/contract/history-message.interface";
+import { Message } from "@shared-kernel/database";
 
 
 @Component({
@@ -18,6 +19,9 @@ import {HistoryMessage} from "@shared-kernel/socket-io/application/contract/hist
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessagesComponent implements OnInit {
+
+  protected drawerOpen = new BehaviorSubject(false);
+
   protected sendRequestForm = new FormGroup({
       event: new FormControl('', {nonNullable: true, validators: [Validators.required]}),
       name: new FormControl('', {nonNullable: true, validators: []}),
@@ -39,6 +43,11 @@ export class MessagesComponent implements OnInit {
 
   protected messages = this.messageList.handle()
     .pipe(
+      tap(collection => {
+        if (collection.length === 0) {
+          this.drawerOpen.next(true);
+        }
+      }),
       shareReplay(1)
     );
 
@@ -114,7 +123,6 @@ export class MessagesComponent implements OnInit {
       .pipe(
         first(),
         map(messages => {
-
           return {
             messageCollection: messages,
             message: messages.find(i => i.id === $event.messageId)
@@ -129,8 +137,16 @@ export class MessagesComponent implements OnInit {
         this.sendRequestForm.controls.event.setValue(m.message.event);
         this.sendRequestForm.controls.name.setValue(m.message.name);
         this.sendRequestForm.controls.body.setValue(m.message.body);
-      })
 
+        this.drawerOpen.next(true);
+      })
+  }
+
+  protected addMessage() {
+    this.sendRequestForm.reset();
+    this.sendRequestForm.setErrors({});
+
+    this.drawerOpen.next(true);
   }
 
   protected isString(data: unknown): data is string {
