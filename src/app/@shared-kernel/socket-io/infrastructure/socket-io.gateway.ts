@@ -22,6 +22,10 @@ export class SocketIoGateway implements SocketIoGatewayContract{
   ) {
   }
 
+  private readonly reconnect_attempts = 5;
+  private current_reconnect_attempts_default = 1;
+  private current_reconnect_attempts = this.current_reconnect_attempts_default;
+
   public connect(contract: {
     host: string
   }) {
@@ -32,38 +36,29 @@ export class SocketIoGateway implements SocketIoGatewayContract{
     }
 
     this.connection = io(contract.host, {
-      reconnectionAttempts: 3,
-      timeout: 5000,
-
-
+      reconnectionAttempts: this.reconnect_attempts
     });
 
     this.connection.on('connect', () => {
+      this.current_reconnect_attempts = 0;
       this._health.next('connected');
     })
 
 
     this.connection.on('connect_error', (e) => {
-      if (e.message === 'xhr poll error') {
-        this.connection.disconnect();
+      console.log('connect_error', e.message);
+
+      this.current_reconnect_attempts++;
+
+      if (e.message === 'xhr poll error' || e.message === 'timeout') {
+        if (this.current_reconnect_attempts <= this.reconnect_attempts) {
+          this._health.next('connecting');
+          return;
+        }
+
         this._health.next('disconnected');
         return;
       }
-
-      if (e.message === 'timeout') {
-        this.connection.disconnect();
-        this._health.next('disconnected');
-        return;
-      }
-    })
-
-    this.connection.on('disconnect', (e) => {
-      console.log('connect_error')
-
-
-    })
-    this.connection.on('disconnecting', () => {
-      console.log('disconnecting')
     })
 
     this.connection.onAny((event, message) => {
