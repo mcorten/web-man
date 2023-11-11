@@ -20,6 +20,8 @@ import {MessageModule} from "@message/message.module";
 import {MatMenuModule} from "@angular/material/menu";
 import { MessageListComponent } from './view/messages/list/message-list/message-list.component';
 import {ClipboardModule} from "@angular/cdk/clipboard";
+import { MessageComponent } from './view/messages/history/message/message.component';
+import { ConnectionComponent } from './view/messages/history/connection/connection.component';
 
 @NgModule({
   imports: [
@@ -50,6 +52,8 @@ import {ClipboardModule} from "@angular/cdk/clipboard";
 
     MessagesComponent,
     JsonViewComponent,
+    MessageComponent,
+    ConnectionComponent,
   ]
 })
 export class SocketIoModule {

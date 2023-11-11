@@ -1,0 +1,19 @@
+:host {
+  .description {
+    display: flex;
+    flex-direction: row;
+
+    .name {
+      flex-grow: 1
+    }
+
+    .action {
+      margin-right: 1.5rem;
+    }
+  }
+
+  .message {
+    margin-bottom: 1rem;
+  }
+}
+
