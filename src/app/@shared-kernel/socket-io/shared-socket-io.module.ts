@@ -6,7 +6,7 @@ import { HistoryStore } from "./application/contract/history-store-list.type";
 import { InMemoryStore, ObservableStore, SingleValueStore } from "@shared-kernel/store";
 import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contract/history-store-detail.token";
 import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
-import { HistoryMessage } from "@shared-kernel/socket-io/application/contract/history-message.interface";
+import { HistoryRecord } from "@shared-kernel/socket-io/application/contract/history-message.interface";
 
 
 @NgModule()
@@ -27,7 +27,7 @@ export class SharedSocketIoModule {
         },
         {
           provide: HISTORY_DETAIL_STORE, useFactory: (): HistoryDetailStore => {
-            return new ObservableStore<HistoryMessage>(
+            return new ObservableStore<HistoryRecord>(
               new InMemoryStore()
             )
           }

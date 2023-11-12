@@ -1,0 +1,17 @@
+:host {
+  .mat-expansion-panel:not([class*="mat-elevation-z"]) {
+    &.connected {
+      box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 165, 0, 0.5), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+    }
+    &.reconnecting {
+      box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(255, 165, 0, 0.5), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+    }
+    &.disconnected {
+      box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(255, 0, 0, 0.5), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+    }
+
+    .mat-expansion-panel-header[aria-disabled="true"] {
+      color:  black;
+    }
+  }
+}

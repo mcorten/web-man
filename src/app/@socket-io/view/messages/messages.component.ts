@@ -8,11 +8,40 @@ import { MessageAddHandler } from "@message/application/handler/message-add.hand
 import { WantsToAddMessage } from "@message/application/use-case/wants-to-add-message.use-case";
 import { MessageListHandler } from "@message/application/handler/message-list.handler";
 import { HISTORY_STORE_LIST, HistoryStore } from "@shared-kernel/socket-io";
-import { HistoryMessage } from "@shared-kernel/socket-io/application/contract/history-message.interface";
+import {
+  HistoryRecord, HistoryRecordConnection,
+  HistoryRecordMessage
+} from "@shared-kernel/socket-io/application/contract/history-message.interface";
 import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contract/history-store-detail.token";
 import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
 import { Message } from "@shared-kernel/database";
 
+// TODO move and rename
+export interface HMessage extends HistoryRecordMessage  {isUpdate: boolean, isRequestReply: boolean}
+
+export function isHistoryRecordConnection(a: unknown): a is HistoryRecordConnection {
+  if (a === null) {
+    return false;
+  }
+
+  if (typeof a === 'object') {
+    return 'type' in a &&  a.type === 'connection';
+  }
+
+  return false;
+}
+
+export function isHistoryRecordMessage(a: unknown): a is HMessage {
+  if (a === null) {
+    return false;
+  }
+
+  if (typeof a === 'object') {
+    return 'type' in a &&  a.type === 'message';
+  }
+
+  return false;
+}
 
 @Component({
   selector: 'app-messages',
@@ -31,20 +60,29 @@ export class MessagesComponent implements OnInit {
     }
   )
 
-  protected showHistory: Observable<Array<HistoryMessage['id']>> = this._history.get()
+  protected showHistory: Observable<Array<HistoryRecord['id']>> = this._history.get()
     .pipe(
       map(historyCollection => [...historyCollection].reverse()),
       shareReplay(1)
     );
 
-  protected historyDetail(id: string): Observable<HistoryMessage & {isUpdate: boolean, isRequestReply: boolean}> {
+  // TODO move
+   protected isHistoryRecordMessage = isHistoryRecordMessage;
+  protected isHistoryRecordConnection = isHistoryRecordConnection;
+
+  protected historyDetail(id: string): Observable<HMessage | HistoryRecord> {
     return this._historyDetail.get(id).pipe(
       map(detail => {
-        return  {
-          ...detail,
-          isUpdate: detail.request === undefined,
-          isRequestReply: detail.request !== undefined
+        if (this.isHistoryRecordMessage(detail)) {
+          return {
+            ...detail,
+            type: 'message',
+            isUpdate: detail.request === undefined,
+            isRequestReply: detail.request !== undefined
+          }
         }
+
+        return detail;
       })
     )
   }
@@ -171,7 +209,5 @@ export class MessagesComponent implements OnInit {
     this.drawerOpen.next(true);
   }
 
-  protected isString(data: unknown): data is string {
-    return typeof data === 'string';
-  }
+
 }

@@ -1,4 +1,4 @@
 import { ObservableStore } from "@shared-kernel/store";
-import { HistoryMessage } from "./history-message.interface";
+import { HistoryRecord } from "./history-message.interface";
 
-export type HistoryDetailStore = ObservableStore<HistoryMessage>;
+export type HistoryDetailStore = ObservableStore<HistoryRecord>;
