@@ -22,6 +22,7 @@ import { MessageListComponent } from './view/messages/list/message-list/message-
 import {ClipboardModule} from "@angular/cdk/clipboard";
 import { MessageComponent } from './view/messages/history/message/message.component';
 import { ConnectionComponent } from './view/messages/history/connection/connection.component';
+import { SideBarComponent } from './view/messages/side-bar/side-bar.component';
 
 @NgModule({
   imports: [
@@ -54,6 +55,7 @@ import { ConnectionComponent } from './view/messages/history/connection/connecti
     JsonViewComponent,
     MessageComponent,
     ConnectionComponent,
+    SideBarComponent,
   ]
 })
 export class SocketIoModule {
