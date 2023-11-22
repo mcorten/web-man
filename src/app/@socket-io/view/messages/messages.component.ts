@@ -1,20 +1,20 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { SOCKET_IO_CONTROLLER } from "@shared-kernel/socket-io/application/contract/controller.token";
 import { SocketIoGateway } from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
 import { BehaviorSubject, first, map, Observable, shareReplay, takeWhile, tap } from "rxjs";
 import { Router } from "@angular/router";
 import { MessageAddHandler } from "@message/application/handler/message-add.handler";
-import { WantsToAddMessage } from "@message/application/use-case/wants-to-add-message.use-case";
 import { MessageListHandler } from "@message/application/handler/message-list.handler";
 import { HISTORY_STORE_LIST, HistoryStore } from "@shared-kernel/socket-io";
 import {
-  HistoryRecord, HistoryRecordConnection,
+  HistoryRecord,
+  HistoryRecordConnection,
   HistoryRecordMessage
 } from "@shared-kernel/socket-io/application/contract/history-message.interface";
 import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contract/history-store-detail.token";
 import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
 import { Message } from "@shared-kernel/database";
+import { WantsToAddMessage } from "@message/application/use-case/wants-to-add-message.use-case";
 
 // TODO move and rename
 export interface HMessage extends HistoryRecordMessage  {isUpdate: boolean, isRequestReply: boolean}
@@ -52,13 +52,7 @@ export function isHistoryRecordMessage(a: unknown): a is HMessage {
 export class MessagesComponent implements OnInit {
 
   protected drawerOpen = new BehaviorSubject(false);
-
-  protected sendRequestForm = new FormGroup({
-      event: new FormControl('', {nonNullable: true, validators: [Validators.required]}),
-      name: new FormControl('', {nonNullable: true, validators: []}),
-      body: new FormControl('', {nonNullable: true, validators: [Validators.required]}),
-    }
-  )
+  protected editMessages = new BehaviorSubject<Message | null>(null);
 
   protected showHistory: Observable<Array<HistoryRecord['id']>> = this._history.get()
     .pipe(
@@ -67,7 +61,7 @@ export class MessagesComponent implements OnInit {
     );
 
   // TODO move
-   protected isHistoryRecordMessage = isHistoryRecordMessage;
+  protected isHistoryRecordMessage = isHistoryRecordMessage;
   protected isHistoryRecordConnection = isHistoryRecordConnection;
 
   protected historyDetail(id: string): Observable<HMessage | HistoryRecord> {
@@ -91,7 +85,7 @@ export class MessagesComponent implements OnInit {
     return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
   };
 
-  protected messages = this.messageList.handle()
+  protected messages: Observable<Message[]> = this.messageList.handle()
     .pipe(
       tap(collection => {
         if (collection.length === 0) {
@@ -125,23 +119,8 @@ export class MessagesComponent implements OnInit {
       })
   }
 
-  requestForm() {
-    if (!this.sendRequestForm.valid) {
-      return;
-    }
 
-    const event = this.sendRequestForm.controls.event.value;
-    const body = this.sendRequestForm.controls.body.value;
-
-    this.request(event,body);
-  }
-
-  request(event: string, body: string) {
-    let name = this.sendRequestForm.controls.name.value;
-    if (name.length === 0) {
-      name = this.sendRequestForm.controls.event.value;
-    }
-
+  request(name: string, event: string, body: string) {
     this.messageAdd.handle(new WantsToAddMessage({
       event,
       body,
@@ -194,20 +173,18 @@ export class MessagesComponent implements OnInit {
           return;
         }
 
-        this.sendRequestForm.controls.event.setValue(m.message.event);
-        this.sendRequestForm.controls.name.setValue(m.message.name);
-        this.sendRequestForm.controls.body.setValue(m.message.body);
-
+        this.editMessages.next(m.message);
         this.drawerOpen.next(true);
       })
   }
 
   protected addMessage() {
-    this.sendRequestForm.reset();
-    this.sendRequestForm.setErrors({});
-
     this.drawerOpen.next(true);
   }
 
+  protected drawerClose() {
+    this.editMessages.next(null);
+    this.drawerOpen.next(false)
+  }
 
 }

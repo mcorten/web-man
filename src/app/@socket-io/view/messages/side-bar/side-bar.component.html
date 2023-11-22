@@ -1,0 +1,49 @@
+<h3>
+  Send message
+  <mat-icon
+    *ngIf="mode === 'EDIT'"
+    (click)="closeDrawer()"
+    aria-hidden="false"
+    aria-label="Add Request"
+    fontIcon="close_outline"></mat-icon>
+</h3>
+<form
+  class="form"
+  [formGroup]="sendRequestForm"
+  (submit)="requestForm()"
+>
+  <mat-form-field>
+    <mat-label>Name</mat-label>
+    <input
+      matInput
+      type="text"
+      [formControl]="sendRequestForm.controls.name"
+      placeholder="Ex. Enable item (acceptance)">
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Event</mat-label>
+    <input
+      matInput
+      type="text"
+      [formControl]="sendRequestForm.controls.event"
+      placeholder="Ex. Test">
+  </mat-form-field>
+  <mat-form-field class="body">
+    <mat-label>Body</mat-label>
+    <textarea
+      rows="15"
+      matInput
+      type="text"
+      [formControl]="sendRequestForm.controls.body"
+      placeholder='Ex. {"foo": "bar"}'
+    ></textarea>
+  </mat-form-field>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="requestForm()"
+  >
+    Send message
+  </button>
+</form>
