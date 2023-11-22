@@ -1,0 +1,10 @@
+#!/bin/bash
+
+tag=$(git tag --sort=taggerdate | tail -1)
+
+if [ -z "${tag}" ];
+then
+  exit 1
+fi
+
+echo $tag
