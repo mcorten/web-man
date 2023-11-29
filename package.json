@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "run-script-os",
+    "build": "run-script-os",
     "start:linux": "./node_modules/.bin/ng serve",
     "build:linux": "./node_modules/.bin/ng build",
     "watch:linux": "./node_modules/.bin/ng build --watch --configuration development",

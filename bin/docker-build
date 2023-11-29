@@ -1,0 +1,11 @@
+#!/bin/bash
+
+tag=$(eval "${BASH_SOURCE%/*}/helper/get-git-latest-tag")
+
+if [ -z "${tag}" ];
+then
+  echo '[X] Failed to get latest git tag'
+  exit 1
+fi
+
+docker build -t mcorten/web-man-client:$tag  .
