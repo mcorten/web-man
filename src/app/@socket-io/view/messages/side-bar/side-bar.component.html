@@ -1,7 +1,7 @@
 <h3>
   Send message
   <mat-icon
-    *ngIf="mode === 'EDIT'"
+    *ngIf="mode === 'ALREADY_EXISTING_MESSAGES'"
     (click)="closeDrawer()"
     aria-hidden="false"
     aria-label="Add Request"
@@ -17,8 +17,9 @@
     <input
       matInput
       type="text"
+      placeholder="Ex. Enable item (acceptance)"
       [formControl]="sendRequestForm.controls.name"
-      placeholder="Ex. Enable item (acceptance)">
+    />
   </mat-form-field>
   <mat-form-field>
     <mat-label>Event</mat-label>
@@ -39,11 +40,22 @@
     ></textarea>
   </mat-form-field>
 
-  <button
-    mat-raised-button
-    color="primary"
-    (click)="requestForm()"
-  >
-    Send message
-  </button>
+  <div style="display: flex; flex-direction: column; row-gap: 10px">
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+    >
+      Send message
+    </button>
+
+    <button
+      *ngIf="messageToEdit"
+      mat-raised-button
+      type="button"
+      (click)="saveForm()"
+    >
+      Update message
+    </button>
+  </div>
 </form>

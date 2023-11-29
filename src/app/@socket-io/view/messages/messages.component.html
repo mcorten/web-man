@@ -8,9 +8,10 @@
       >
         <app-side-bar
           *ngIf="(drawerOpen | async) ?? false"
-          [mode]="_messageCollection.length > 0 ? 'EDIT' : 'ADD'"
-          [message]="editMessages | async"
+          [mode]="_messageCollection.length > 0 ? 'ALREADY_EXISTING_MESSAGES' : 'NO_MESSAGES'"
+          [messageToEdit]="editMessages | async"
           (request)="request($event.name, $event.event, $event.body)"
+          (saveMessage)="saveMessage($event.name, $event.event, $event.body, $event.id)"
           (close)="drawerClose()"
         ></app-side-bar>
       </mat-drawer>
@@ -26,7 +27,7 @@
       <div *ngIf="_messageCollection.length > 0">
         <app-message-list
           [messageCollection]="_messageCollection"
-          (duplicateMessage)="duplicateMessage($event)"
+          (editMessage)="editMessage($event)"
         ></app-message-list>
       </div>
     </mat-drawer-container>

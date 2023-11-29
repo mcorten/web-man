@@ -13,7 +13,7 @@
         aria-hidden="false"
         aria-label="Send request"
         fontIcon="mode_edit_outline"
-        (click)="$event.stopPropagation(); duplicateMessage.emit({messageId: message.id})"
+        (click)="$event.stopPropagation(); editMessage.emit({messageId: message.id})"
       ></mat-icon>
       <span
         matTooltip="{{message.name}}"
@@ -34,7 +34,7 @@
         >mail_outline</mat-icon>
         <span>Send</span>
       </button>
-      <button mat-menu-item (click)="duplicateMessage.emit({messageId: message.id})">
+      <button mat-menu-item (click)="editMessage.emit({messageId: message.id})">
         <mat-icon
           aria-hidden="false"
           aria-label="Remove request"

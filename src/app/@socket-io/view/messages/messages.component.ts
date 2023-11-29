@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { SOCKET_IO_CONTROLLER } from "@shared-kernel/socket-io/application/contract/controller.token";
 import { SocketIoGateway } from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
-import { BehaviorSubject, first, map, Observable, shareReplay, takeWhile, tap } from "rxjs";
+import { BehaviorSubject, first, map, Observable, shareReplay, switchMap, takeWhile, tap } from "rxjs";
 import { Router } from "@angular/router";
 import { MessageAddHandler } from "@message/application/handler/message-add.handler";
 import { MessageListHandler } from "@message/application/handler/message-list.handler";
@@ -15,6 +15,8 @@ import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contr
 import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
 import { Message } from "@shared-kernel/database";
 import { WantsToAddMessage } from "@message/application/use-case/wants-to-add-message.use-case";
+import { MessageUpdateHandler } from "@message/application/handler/message-update.handler";
+import { WantsToUpdateMessage } from "@message/application/use-case/wants-to-update-message.use-case";
 
 // TODO move and rename
 export interface HMessage extends HistoryRecordMessage  {isUpdate: boolean, isRequestReply: boolean}
@@ -93,17 +95,19 @@ export class MessagesComponent implements OnInit {
         }
       }),
       map(v => v.sort(this.sortAlphabetically)),
-      shareReplay(1)
+      shareReplay(1),
     );
 
   public constructor(
     protected readonly messageList: MessageListHandler,
     private readonly messageAdd: MessageAddHandler,
+    private readonly messageUpdate: MessageUpdateHandler,
     @Inject(SOCKET_IO_CONTROLLER) private readonly connection: SocketIoGateway,
     @Inject(HISTORY_STORE_LIST) private readonly _history: HistoryStore,
     @Inject(HISTORY_DETAIL_STORE) private readonly _historyDetail: HistoryDetailStore,
     private readonly router: Router
   ) {
+
   }
 
   ngOnInit(): void {
@@ -127,8 +131,7 @@ export class MessagesComponent implements OnInit {
       name,
     }))
       .pipe(first())
-      .subscribe(() => {
-      })
+      .subscribe()
 
     this.connection.request({
       event: event,
@@ -157,7 +160,39 @@ export class MessagesComponent implements OnInit {
     );
   }
 
-  protected duplicateMessage($event: { messageId: number }) {
+  protected saveMessage(name: string, event: string, body: string, id?: number) {
+    this.messageList.handle()
+      .pipe(
+        first(),
+        switchMap((list) => {
+          let existingMessage = undefined;
+          if (id) {
+            existingMessage = list.find((existing => existing.id === id))
+          }
+
+          if (existingMessage) {
+            const update = new WantsToUpdateMessage({
+              id: existingMessage.id,
+              event,
+              body,
+              name,
+            });
+
+            return this.messageUpdate.handle(update)
+          }
+
+          return this.messageAdd.handle(new WantsToAddMessage({
+            event,
+            body,
+            name,
+          }))
+            .pipe(first())
+        })
+      )
+      .subscribe((list) => {})
+  }
+
+  protected editMessage($event: { messageId: number }) {
     this.messages
       .pipe(
         first(),
