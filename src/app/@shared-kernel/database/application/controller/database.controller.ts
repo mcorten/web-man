@@ -154,6 +154,30 @@ export class Database extends Dexie {
             this._messages.delete(contract.id)
           )
         )
+      },
+      update: (contract: Omit<Message, 'hash'>) => {
+        return defer(() => from(
+            this.messages().findOne({id: contract.id})
+              .pipe(
+                switchMap((maybeMessage) => {
+                  if (maybeMessage === undefined) {
+                    throw new Error(`Message with id [${contract.id}] not found`)
+                  }
+
+                  const message = maybeMessage as Message;
+
+                  return this._messages.update(message.id, {
+                    name: contract.name,
+                    event: contract.event,
+                    hash: Md5.hashStr(contract.body),
+                    body: contract.body
+                  }).then(affected => {
+                    return affected === 1;
+                  });
+                })
+              )
+          )
+        )
       }
     }
   }

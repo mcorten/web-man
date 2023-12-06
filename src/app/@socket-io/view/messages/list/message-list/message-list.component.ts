@@ -38,7 +38,7 @@ export class MessageListComponent {
   public messageCollection: Message[] = [];
 
   @Output()
-  public duplicateMessage = new EventEmitter<{messageId: number}>();
+  public editMessage = new EventEmitter<{messageId: number}>();
 
   public constructor(
     private readonly messageRemove: MessageRemoveHandler,
