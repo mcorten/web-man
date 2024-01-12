@@ -24,6 +24,7 @@
       "dom"
     ],
     "paths": {
+      "@label/*": ["src/app/@label/*"],
       "@server/*": ["src/app/@server/*"],
       "@message/*": ["src/app/@message/*"],
       "@shared-kernel/*": ["src/app/@shared-kernel/*"]

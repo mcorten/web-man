@@ -23,6 +23,7 @@ import {ClipboardModule} from "@angular/cdk/clipboard";
 import { MessageComponent } from './view/messages/history/message/message.component';
 import { ConnectionComponent } from './view/messages/history/connection/connection.component';
 import { SideBarComponent } from './view/messages/side-bar/side-bar.component';
+import { MatChipsModule } from "@angular/material/chips";
 
 @NgModule({
   imports: [
@@ -48,6 +49,7 @@ import { SideBarComponent } from './view/messages/side-bar/side-bar.component';
     MessageListComponent,
     JsonPipe,
     ClipboardModule,
+    MatChipsModule,
   ],
   declarations: [
 

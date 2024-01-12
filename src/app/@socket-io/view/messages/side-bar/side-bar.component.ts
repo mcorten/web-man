@@ -1,18 +1,31 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { FormControl, FormGroup, Validators } from "@angular/forms";
-import { Message } from "@shared-kernel/database";
+import { Message, MessageLabel } from "@shared-kernel/database";
+import { MatChipInputEvent } from "@angular/material/chips";
+import { COMMA, ENTER } from "@angular/cdk/keycodes";
+import { Label, LabelCreate } from "@shared-kernel/database/application/contract/table/label.table";
 
 @Component({
   selector: 'app-side-bar',
   templateUrl: './side-bar.component.html',
-  styleUrls: ['./side-bar.component.scss']
+  styleUrls: ['./side-bar.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SideBarComponent implements OnInit {
   @Input({required: true})
   public mode!: 'NO_MESSAGES' | 'ALREADY_EXISTING_MESSAGES';
 
   @Input()
-  public messageToEdit: Message | null = null;
+  public messageToEdit: Message & MessageLabel | null = null;
 
   @Output()
   public close = new EventEmitter<void>();
@@ -22,6 +35,21 @@ export class SideBarComponent implements OnInit {
 
   @Output()
   public saveMessage = new EventEmitter<{id?: number, name: string, event: string, body: string }>();
+
+  @Output()
+  public addLabel = new EventEmitter<{
+    message: Pick<Message, 'id'>,
+    label: LabelCreate
+  }>();
+
+  @Output()
+  public removeLabel = new EventEmitter<{
+    message: Pick<Message, 'id'>,
+    label: Label
+  }>();
+
+  protected readonly separatorKeysCodes = [ENTER, COMMA] as const;
+
 
   protected sendRequestForm = new FormGroup({
     name: new FormControl('', {nonNullable: true, validators: []}),
@@ -68,7 +96,6 @@ export class SideBarComponent implements OnInit {
 
     this.sendRequest(name, event, body);
   }
-
   sendRequest(name: string, event: string, body: string) {
     this.request.next({
       name: name,
@@ -111,6 +138,39 @@ export class SideBarComponent implements OnInit {
       name,
       event,
       body
+    })
+  }
+
+  add(event: MatChipInputEvent): void {
+    const value = (event.value || '').trim();
+
+    if (!this.messageToEdit) {
+      return;
+    }
+
+    if (value.length === 0) {
+      return;
+    }
+
+    this.addLabel.emit({
+      label: {
+        name: value
+      },
+      message: this.messageToEdit
+    })
+
+    // Clear the input value
+    event.chipInput!.clear();
+  }
+
+  remove(label: Label): void {
+    if (!this.messageToEdit) {
+      return;
+    }
+
+    this.removeLabel.emit({
+      label,
+      message: this.messageToEdit
     })
   }
 }

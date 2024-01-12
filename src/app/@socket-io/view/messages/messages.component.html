@@ -12,6 +12,8 @@
           [messageToEdit]="editMessages | async"
           (request)="request($event.name, $event.event, $event.body)"
           (saveMessage)="saveMessage($event.name, $event.event, $event.body, $event.id)"
+          (addLabel)="addLabel($event.message, $event.label)"
+          (removeLabel)="removeLabel($event.message, $event.label)"
           (close)="drawerClose()"
         ></app-side-bar>
       </mat-drawer>

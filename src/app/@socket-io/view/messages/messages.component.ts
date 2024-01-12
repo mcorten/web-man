@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { SOCKET_IO_CONTROLLER } from "@shared-kernel/socket-io/application/contract/controller.token";
 import { SocketIoGateway } from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
-import { BehaviorSubject, first, map, Observable, shareReplay, switchMap, takeWhile, tap } from "rxjs";
+import { BehaviorSubject, first, map, Observable, of, shareReplay, switchMap, takeWhile, tap } from "rxjs";
 import { Router } from "@angular/router";
 import { MessageAddHandler } from "@message/application/handler/message-add.handler";
 import { MessageListHandler } from "@message/application/handler/message-list.handler";
@@ -13,10 +13,18 @@ import {
 } from "@shared-kernel/socket-io/application/contract/history-message.interface";
 import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contract/history-store-detail.token";
 import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
-import { Message } from "@shared-kernel/database";
+import { Message, MessageLabel } from "@shared-kernel/database";
 import { WantsToAddMessage } from "@message/application/use-case/wants-to-add-message.use-case";
 import { MessageUpdateHandler } from "@message/application/handler/message-update.handler";
 import { WantsToUpdateMessage } from "@message/application/use-case/wants-to-update-message.use-case";
+import { Label, LabelCreate } from "@shared-kernel/database/application/contract/table/label.table";
+import { MessageAddLabelHandler } from "@message/application/handler/message-add-label.handler";
+import { WantsToAddLabelToMessage } from "@message/application/use-case/wants-to-add-label-to-message.use-case";
+import { LabelListAdapter } from "../../../@label/infrastructure/gateway/adapter/label-list.adapter";
+import { MessageRemoveLabelHandler } from "@message/application/handler/message-remove-label.handler";
+import {
+  WantsToRemoveLabelFromMessage
+} from "@message/application/use-case/wants-to-remove-label-from-message.use-case";
 
 // TODO move and rename
 export interface HMessage extends HistoryRecordMessage  {isUpdate: boolean, isRequestReply: boolean}
@@ -54,7 +62,7 @@ export function isHistoryRecordMessage(a: unknown): a is HMessage {
 export class MessagesComponent implements OnInit {
 
   protected drawerOpen = new BehaviorSubject(false);
-  protected editMessages = new BehaviorSubject<Message | null>(null);
+  protected editMessages = new BehaviorSubject<(Message & {labels: Label[]}) | null>(null);
 
   protected showHistory: Observable<Array<HistoryRecord['id']>> = this._history.get()
     .pipe(
@@ -87,12 +95,58 @@ export class MessagesComponent implements OnInit {
     return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
   };
 
-  protected messages: Observable<Message[]> = this.messageList.handle()
+  protected messages: Observable<Array<Message & MessageLabel> > = this.messageList.handle()
     .pipe(
       tap(collection => {
         if (collection.length === 0) {
           this.drawerOpen.next(true);
         }
+      }),
+      switchMap(messages => {
+        return this.labelList.handle()
+          .pipe(
+            switchMap((labels): Observable<Array<Message & MessageLabel>> => {
+              return of(messages.map(m => {
+                if (m.labels.length > 0) {
+                  let a: Message & MessageLabel =  {
+                    ...m,
+                    labels: m.labels.map(label => {
+                      const maybeLabel = labels.find(l => l.id === label.id);
+                      if (maybeLabel === undefined) {
+                        throw new Error('Label not found')
+                      }
+
+                      return maybeLabel
+                    })
+                  }
+
+                  return a;
+                }
+
+
+                return {...m, labels: []};
+              }));
+            }),
+            tap(v => {
+              /**
+               * this needs to happen because the message store is 1 big array with messages
+               * Would be better to have a message list that contains Observables so we can next on them
+               */
+              const currentMessage = this.editMessages.value;
+              if (currentMessage === null) {
+                return
+              }
+
+              const updatedMessage = v.find((c => c.id === currentMessage.id));
+              if (updatedMessage === undefined) {
+                return;
+              }
+
+              this.editMessages.next(updatedMessage);
+            })
+          )
+
+
       }),
       map(v => v.sort(this.sortAlphabetically)),
       shareReplay(1),
@@ -102,6 +156,9 @@ export class MessagesComponent implements OnInit {
     protected readonly messageList: MessageListHandler,
     private readonly messageAdd: MessageAddHandler,
     private readonly messageUpdate: MessageUpdateHandler,
+    private readonly messageAddLabel: MessageAddLabelHandler,
+    private readonly messageRemoveLabel: MessageRemoveLabelHandler,
+    private readonly labelList: LabelListAdapter,
     @Inject(SOCKET_IO_CONTROLLER) private readonly connection: SocketIoGateway,
     @Inject(HISTORY_STORE_LIST) private readonly _history: HistoryStore,
     @Inject(HISTORY_DETAIL_STORE) private readonly _historyDetail: HistoryDetailStore,
@@ -129,6 +186,7 @@ export class MessagesComponent implements OnInit {
       event,
       body,
       name,
+      labels: []
     }))
       .pipe(first())
       .subscribe()
@@ -176,6 +234,7 @@ export class MessagesComponent implements OnInit {
               event,
               body,
               name,
+              labels: []
             });
 
             return this.messageUpdate.handle(update)
@@ -185,6 +244,7 @@ export class MessagesComponent implements OnInit {
             event,
             body,
             name,
+            labels: []
           }))
             .pipe(first())
         })
@@ -222,4 +282,14 @@ export class MessagesComponent implements OnInit {
     this.drawerOpen.next(false)
   }
 
+  protected addLabel(message: Pick<Message, 'id'>, label: Pick<LabelCreate, 'name'>) {
+    this.messageAddLabel
+      .handle(new WantsToAddLabelToMessage(message.id, label))
+      .subscribe(result => console.log('result'));
+  }
+  protected removeLabel(message: Pick<Message, 'id'>, label: Label) {
+    this.messageRemoveLabel
+      .handle(new WantsToRemoveLabelFromMessage(message.id, label))
+      .subscribe(result => console.log('result'));
+  }
 }

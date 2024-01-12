@@ -10,8 +10,16 @@ import { MessageListAdapter } from "./infrastructure/gateway/adapter/message-lis
 import { MessageListHandler } from "./application/handler/message-list.handler";
 import { MessageUpdateAdapter } from "./infrastructure/gateway/adapter/message-update.adapter";
 import { MessageUpdateHandler } from "@message/application/handler/message-update.handler";
+import { MessageAddLabelAdapter } from "@message/infrastructure/gateway/adapter/message-add-label.adapter";
+import { MessageAddLabelHandler } from "@message/application/handler/message-add-label.handler";
+import { LabelModule } from "@label/index";
+import { MessageRemoveLabelAdapter } from "@message/infrastructure/gateway/adapter/message-remove-label.adapter";
+import { MessageRemoveLabelHandler } from "@message/application/handler/message-remove-label.handler";
 
 @NgModule({
+  imports: [
+    LabelModule
+  ],
   providers: [
     MessageAddAdapter,
     MessageAddHandler,
@@ -24,6 +32,12 @@ import { MessageUpdateHandler } from "@message/application/handler/message-updat
 
     MessageUpdateAdapter,
     MessageUpdateHandler,
+
+    MessageAddLabelHandler,
+    MessageAddLabelAdapter,
+
+    MessageRemoveLabelHandler,
+    MessageRemoveLabelAdapter,
 
     {
       provide: MESSAGE_LIST,

@@ -1,13 +1,15 @@
-import Dexie, {Table} from "dexie";
+import Dexie, { Table } from "dexie";
 import { defer, filter, from, map, Observable, of, switchMap, tap } from "rxjs";
 import { Server, ServerCreate } from "../contract/table/server.table";
 import { Message, MessageCreate } from "@shared-kernel/database";
-import {Md5} from "ts-md5";
+import { Md5 } from "ts-md5";
+import { Label, LabelCreate } from "@shared-kernel/database/application/contract/table/label.table";
 
 
 export class Database extends Dexie {
   private _servers!: Table<ServerCreate, number>;
   private _messages!: Table<MessageCreate, number>;
+  private _labels!: Table<LabelCreate, number>;
 
   public constructor() {
     super('MyDatabase');
@@ -21,18 +23,91 @@ export class Database extends Dexie {
     });
     this.version(3).stores({
       messages: '++id, name'
-    }).upgrade (trans => {
-      return trans.table("messages").toCollection().modify ((message: Message) => {
+    }).upgrade(trans => {
+      return trans.table("messages").toCollection().modify((message: Message) => {
         message.name = message.event
+      })
+    });
+    this.version(4).stores({
+      labels: '++id, name'
+    });
+    this.version(5).stores({}).upgrade(trans => {
+      return trans.table("messages").toCollection().modify((message: Message) => {
+        message.labels = []
       })
     });
 
 
-
     this._servers = this.table('servers');
     this._messages = this.table('messages');
+    this._labels = this.table('labels');
 
     this.open();
+  }
+
+  public labels() {
+    const isLabel = (a: unknown): a is Label => {
+      if (a === null) {
+        return false;
+      }
+
+      if (!(typeof a === 'object')) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return {
+      add: (label: LabelCreate): Observable<number> => {
+        // TODO find if it does not exist already
+        return defer(() => from(
+          this._labels.add(label)
+        ))
+      },
+      findOne: (contract: Partial<Label>): Observable<Label | undefined> => {
+        const where: { [key: string]: any } = {}
+        if (contract.id) {
+          where['id'] = contract.id
+        }
+        if (contract.name) {
+          where['name'] = contract.name
+        }
+
+        return defer(() => from(
+            this._labels
+              .where(where)
+              .first()
+          )
+          .pipe(map(maybeLabel => {
+            if (isLabel(maybeLabel)) {
+              return maybeLabel;
+            }
+
+            return undefined;
+          }))
+        )
+      },
+
+      list: (): Observable<Label[]> => {
+        return defer(() => from(
+            this._labels.toArray()
+          ).pipe(
+            map(
+              labels => {
+                return labels.reduce((l, a) => {
+                  if (isLabel(a)) {
+                    l.push(a);
+                  }
+
+                  return l;
+                }, [] as Label[]);
+
+              })
+          )
+          )
+      },
+    }
   }
 
 
@@ -61,7 +136,7 @@ export class Database extends Dexie {
           )
       },
       findOne: (contract: Partial<Pick<ServerCreate, 'id' | 'host'>>): Observable<ServerCreate | undefined> => {
-        const where: {[key: string]: any} = {}
+        const where: { [key: string]: any } = {}
         if (contract.id) {
           where['id'] = contract.id
         }
@@ -88,7 +163,7 @@ export class Database extends Dexie {
 
   public messages() {
     return {
-      addIfNotExists: (message: Pick<MessageCreate, 'event' | 'body' | 'name'>) => {
+      addIfNotExists: (message: Pick<MessageCreate, 'event' | 'body' | 'name' | 'labels'>) => {
         return defer(() => {
           return this.messages().findOne({name: message.name})
             .pipe(
@@ -104,7 +179,7 @@ export class Database extends Dexie {
             )
         })
       },
-      add: (message: Pick<MessageCreate, 'event' | 'body' | 'name'> & Partial<Pick<MessageCreate, 'hash'>>): Observable<number> => {
+      add: (message: Pick<MessageCreate, 'event' | 'body' | 'name' | 'labels'> & Partial<Pick<MessageCreate, 'hash'>>): Observable<number> => {
         return from(this._messages.add({
           ...message,
           hash: message.hash ?? Md5.hashStr(message.body)
@@ -122,18 +197,50 @@ export class Database extends Dexie {
             })
           )
       },
+      label: () => ({
+        add: (messageId: number, label: Label): Observable<boolean> => {
+          return this.messages().get(messageId)
+            .pipe(
+              switchMap(message => {
+                const foundLabel = message.labels.find(messageContainsLabel => messageContainsLabel.id === label.id);
+
+                if (foundLabel === undefined) {
+                  return this._messages.update(message, {
+                    labels: message.labels.concat([{id: label.id}])
+                  });
+                }
+
+                return of(0); // message already contains label
+              }),
+              map(affectedRows => affectedRows > 0)
+            )
+        },
+        remove: (messageId: number, label: Label): Observable<null> => {
+          return this.messages().get(messageId)
+            .pipe(
+              switchMap(message => {
+                let filteredLabels = message.labels.filter(_label => _label.id !== label.id)
+
+                return this._messages.update(messageId, {
+                  labels: filteredLabels
+                })
+              }),
+              map(affectedRows => null)
+            )
+        }
+      }),
       list: (): Observable<Message[]> => {
         return defer(() => from(
-          this._messages.toArray()
-        ).pipe(
-          map(messageCollection =>
-            messageCollection.filter((m): m is Message => true)
+            this._messages.toArray()
+          ).pipe(
+            map(messageCollection =>
+              messageCollection.filter((m): m is Message => true)
+            )
           )
-        )
         )
       },
       findOne: (contract: Partial<Pick<Message, 'id' | 'name'>>): Observable<MessageCreate | undefined> => {
-        const where: {[key: string]: any} = {}
+        const where: { [key: string]: any } = {}
         if (contract.id) {
           where['id'] = contract.id
         }
