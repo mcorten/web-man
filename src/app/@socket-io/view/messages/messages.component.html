@@ -26,9 +26,16 @@
           aria-label="Add Request"
           fontIcon="add_outline"></mat-icon>
       </h3>
+      <form class="example-form" [formGroup]="filterMessageForm">
+        <mat-form-field class="form-filter-message">
+          <mat-label>Filter on name or label</mat-label>
+          <input matInput placeholder="Filter value" autocomplete="off" [formControlName]="'messageFilter'">
+        </mat-form-field>
+      </form>
+
       <div *ngIf="_messageCollection.length > 0">
         <app-message-list
-          [messageCollection]="_messageCollection"
+          [messageCollection]="(messagesFiltered | async) ?? []"
           (editMessage)="editMessage($event)"
         ></app-message-list>
       </div>

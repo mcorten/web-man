@@ -9,7 +9,7 @@ import {
   SimpleChanges
 } from '@angular/core';
 import { FormControl, FormGroup, Validators } from "@angular/forms";
-import { Message, MessageLabel } from "@shared-kernel/database";
+import { Message } from "@shared-kernel/database";
 import { MatChipInputEvent } from "@angular/material/chips";
 import { COMMA, ENTER } from "@angular/cdk/keycodes";
 import { Label, LabelCreate } from "@shared-kernel/database/application/contract/table/label.table";
@@ -25,7 +25,7 @@ export class SideBarComponent implements OnInit {
   public mode!: 'NO_MESSAGES' | 'ALREADY_EXISTING_MESSAGES';
 
   @Input()
-  public messageToEdit: Message & MessageLabel | null = null;
+  public messageToEdit: Message<Label> | null = null;
 
   @Output()
   public close = new EventEmitter<void>();
