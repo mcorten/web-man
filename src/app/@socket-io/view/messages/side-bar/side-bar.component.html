@@ -59,3 +59,22 @@
     </button>
   </div>
 </form>
+
+<ng-container *ngIf="messageToEdit">
+  <h3>Message labels</h3>
+  <mat-form-field class="message-label-list" style="width:100%;">
+      <mat-chip-grid #chipGrid aria-label="Add label" style="width: 100%">
+      <mat-chip-row *ngFor="let _label of messageToEdit?.labels"
+                    (removed)="remove(_label)"
+      >
+        <mat-icon matChipRemove>cancel</mat-icon>
+        <span class="chit-text">{{_label.name}}</span>
+      </mat-chip-row>
+      <input placeholder="New label..."
+             [matChipInputFor]="chipGrid"
+             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+             [matChipInputAddOnBlur]="true"
+             (matChipInputTokenEnd)="add($event)"/>
+    </mat-chip-grid>
+  </mat-form-field>
+</ng-container>

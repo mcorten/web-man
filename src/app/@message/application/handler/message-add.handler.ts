@@ -28,7 +28,8 @@ export class MessageAddHandler {
               id: messageId,
               name: useCase.message.name,
               event: useCase.message.event,
-              body: useCase.message.body
+              body: useCase.message.body,
+              labels: []
             }])
           )
         })
