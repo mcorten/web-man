@@ -9,16 +9,11 @@ export interface MessageCreate {
   labels: {id: number}[]
 }
 
-export interface Message {
+export interface Message<Label = {id: number}> {
   id: number,
   name: string,
   hash: string,
   event: string
   body: string,
-  labels: {id: number}[]
+  labels: Label[]
 }
-
-export interface MessageLabel {
-  labels: Array<Label>
-}
-

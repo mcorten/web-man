@@ -1,7 +1,18 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { SOCKET_IO_CONTROLLER } from "@shared-kernel/socket-io/application/contract/controller.token";
 import { SocketIoGateway } from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
-import { BehaviorSubject, first, map, Observable, of, shareReplay, switchMap, takeWhile, tap } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  first,
+  map,
+  Observable,
+  of,
+  shareReplay, startWith,
+  switchMap,
+  takeWhile,
+  tap
+} from "rxjs";
 import { Router } from "@angular/router";
 import { MessageAddHandler } from "@message/application/handler/message-add.handler";
 import { MessageListHandler } from "@message/application/handler/message-list.handler";
@@ -13,7 +24,7 @@ import {
 } from "@shared-kernel/socket-io/application/contract/history-message.interface";
 import { HISTORY_DETAIL_STORE } from "@shared-kernel/socket-io/application/contract/history-store-detail.token";
 import { HistoryDetailStore } from "@shared-kernel/socket-io/application/contract/history-store-detail.type";
-import { Message, MessageLabel } from "@shared-kernel/database";
+import { Message } from "@shared-kernel/database";
 import { WantsToAddMessage } from "@message/application/use-case/wants-to-add-message.use-case";
 import { MessageUpdateHandler } from "@message/application/handler/message-update.handler";
 import { WantsToUpdateMessage } from "@message/application/use-case/wants-to-update-message.use-case";
@@ -25,6 +36,7 @@ import { MessageRemoveLabelHandler } from "@message/application/handler/message-
 import {
   WantsToRemoveLabelFromMessage
 } from "@message/application/use-case/wants-to-remove-label-from-message.use-case";
+import { AbstractControl, FormBuilder, FormControl, FormGroup } from "@angular/forms";
 
 // TODO move and rename
 export interface HMessage extends HistoryRecordMessage  {isUpdate: boolean, isRequestReply: boolean}
@@ -70,6 +82,14 @@ export class MessagesComponent implements OnInit {
       shareReplay(1)
     );
 
+  protected filterMessageForm: FormGroup<{
+    messageFilter: FormControl<string>
+  }> = new FormBuilder().nonNullable
+    .group({
+      messageFilter: ''
+    })
+
+
   // TODO move
   protected isHistoryRecordMessage = isHistoryRecordMessage;
   protected isHistoryRecordConnection = isHistoryRecordConnection;
@@ -95,7 +115,7 @@ export class MessagesComponent implements OnInit {
     return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
   };
 
-  protected messages: Observable<Array<Message & MessageLabel> > = this.messageList.handle()
+  protected messages: Observable<Array<Message<Label>> > = this.messageList.handle()
     .pipe(
       tap(collection => {
         if (collection.length === 0) {
@@ -105,10 +125,10 @@ export class MessagesComponent implements OnInit {
       switchMap(messages => {
         return this.labelList.handle()
           .pipe(
-            switchMap((labels): Observable<Array<Message & MessageLabel>> => {
+            switchMap((labels): Observable<Array<Message<Label>>> => {
               return of(messages.map(m => {
                 if (m.labels.length > 0) {
-                  let a: Message & MessageLabel =  {
+                  let a: Message<Label> =  {
                     ...m,
                     labels: m.labels.map(label => {
                       const maybeLabel = labels.find(l => l.id === label.id);
@@ -145,12 +165,30 @@ export class MessagesComponent implements OnInit {
               this.editMessages.next(updatedMessage);
             })
           )
-
-
       }),
       map(v => v.sort(this.sortAlphabetically)),
       shareReplay(1),
     );
+  protected messagesFiltered = combineLatest([this.messages, this.filterMessageForm.controls.messageFilter.valueChanges.pipe(startWith( this.filterMessageForm.controls.messageFilter.value))])
+    .pipe(
+      map(([messages, filter]) => {
+        if (filter.length === 0) {
+          return messages;
+        }
+
+        const _filterLowerCase = filter.toLowerCase();
+
+        return messages.filter(_message => {
+          const findLabel = _message.labels.find(_label => _label.name.toLowerCase().includes(_filterLowerCase));
+          if (findLabel) {
+            return true;
+          }
+
+          return _message.name.toLowerCase().includes(_filterLowerCase);
+        })
+      }),
+      shareReplay(1)
+    )
 
   public constructor(
     protected readonly messageList: MessageListHandler,
@@ -164,7 +202,6 @@ export class MessagesComponent implements OnInit {
     @Inject(HISTORY_DETAIL_STORE) private readonly _historyDetail: HistoryDetailStore,
     private readonly router: Router
   ) {
-
   }
 
   ngOnInit(): void {
