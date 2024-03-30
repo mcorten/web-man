@@ -9,6 +9,12 @@ import { RouterModule } from "@angular/router";
 import { AppRoutes } from "./app.routes";
 import { ServiceWorkerModule, SwUpdate } from '@angular/service-worker';
 import { pwaUpdate } from "./app-pwa.update";
+import { PeerToPeerModule } from "./@peer-to-peer/peer-to-peer.module";
+import { MatIconModule } from "@angular/material/icon";
+import { MatMenuModule } from "@angular/material/menu";
+import { MatListModule } from "@angular/material/list";
+import { CdkConnectedOverlay, CdkOverlayOrigin } from "@angular/cdk/overlay";
+import { MatDialogModule } from "@angular/material/dialog";
 
 
 @NgModule({
@@ -19,6 +25,7 @@ import { pwaUpdate } from "./app-pwa.update";
     BrowserModule,
     BrowserAnimationsModule,
     DatabaseModule.forRoot(),
+    PeerToPeerModule,
     MatToolbarModule,
     RouterModule.forRoot(AppRoutes),
     ServiceWorkerModule.register('ngsw-worker.js', {
@@ -26,7 +33,11 @@ import { pwaUpdate } from "./app-pwa.update";
       // Register the ServiceWorker as soon as the application is stable
       // or after 30 seconds (whichever comes first).
       registrationStrategy: 'registerImmediately'
-    })
+    }),
+    MatIconModule,
+    CdkOverlayOrigin,
+    CdkConnectedOverlay,
+    MatDialogModule,
   ],
   providers: [
     {

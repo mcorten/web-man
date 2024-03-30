@@ -1,6 +1,23 @@
 <mat-toolbar>
-  <span>{{ title }} <sup>alpha</sup></span>
+  <div>
+    <ng-container *ngIf="networkStatus | async as _network">
+      <span class="network-status"
+            [class._connected]="_network.status === 'connected'"
+      ></span>
+    </ng-container>
+    <span>
+      {{ title }} <sup>alpha</sup>
+    </span>
+  </div>
+  <div style="margin: 10px; display: flex; flex-direction: row;">
+
+    <ng-container *ngIf="networkStatus | async as _network">
+      <mat-icon (click)="networkDialog()">network_wifi</mat-icon>
+    </ng-container>
+  </div>
 </mat-toolbar>
 
-
 <router-outlet></router-outlet>
+<ng-template #noClients>
+  Connected users: 0
+</ng-template>
