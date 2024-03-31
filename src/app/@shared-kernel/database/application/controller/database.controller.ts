@@ -1,15 +1,18 @@
-import Dexie, { Table } from "dexie";
-import { defer, filter, from, map, Observable, of, switchMap, tap } from "rxjs";
-import { Server, ServerCreate } from "../contract/table/server.table";
-import { Message, MessageCreate } from "@shared-kernel/database";
-import { Md5 } from "ts-md5";
-import { Label, LabelCreate } from "@shared-kernel/database/application/contract/table/label.table";
+import Dexie, {Table} from "dexie";
+import {defer, from, map, Observable, of, switchMap} from "rxjs";
+import {Server, ServerCreate} from "../contract/table/server.table";
+import {Message, MessageCreate} from "@shared-kernel/database";
+import {Md5} from "ts-md5";
+import {Label, LabelCreate} from "../contract/table/label.table";
+import { PeerServer, PeerServerCreate } from "../contract/table/peer-servers.table";
+import {v4 as uuidv4} from "uuid";
 
 
 export class Database extends Dexie {
   private _servers!: Table<ServerCreate, number>;
   private _messages!: Table<MessageCreate, number>;
   private _labels!: Table<LabelCreate, number>;
+  private _peerServers!: Table<PeerServerCreate, number>;
 
   public constructor() {
     super('MyDatabase');
@@ -36,11 +39,14 @@ export class Database extends Dexie {
         message.labels = []
       })
     });
-
+    this.version(6).stores({
+      'peer-servers': '++id,  turn, user'
+    })
 
     this._servers = this.table('servers');
     this._messages = this.table('messages');
     this._labels = this.table('labels');
+    this._peerServers = this.table('peer-servers');
 
     this.open();
   }
@@ -79,13 +85,13 @@ export class Database extends Dexie {
               .where(where)
               .first()
           )
-          .pipe(map(maybeLabel => {
-            if (isLabel(maybeLabel)) {
-              return maybeLabel;
-            }
+            .pipe(map(maybeLabel => {
+              if (isLabel(maybeLabel)) {
+                return maybeLabel;
+              }
 
-            return undefined;
-          }))
+              return undefined;
+            }))
         )
       },
 
@@ -105,7 +111,26 @@ export class Database extends Dexie {
 
               })
           )
+        )
+      },
+    }
+  }
+
+  public peerServers() {
+    return {
+      add: (peerServer: PeerServerCreate): Observable<number> => {
+        return defer(() => from(
+          this._peerServers.add(peerServer)
+        ))
+      },
+      list: (): Observable<PeerServer[]> => {
+        return defer(() => from(
+          this._peerServers.toArray()
+        )).pipe(
+          map(messageCollection =>
+            messageCollection.filter((m): m is PeerServer => true)
           )
+        )
       },
     }
   }

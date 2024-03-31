@@ -1,0 +1,6 @@
+:host {
+  .network {
+    display: flex;
+    flex-direction: column;
+  }
+}

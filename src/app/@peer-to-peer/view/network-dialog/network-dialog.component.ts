@@ -1,18 +1,60 @@
-import { Component, Inject } from '@angular/core';
-import { SERVER_NETWORK_STATUS } from "../../application/contract/network-status-store.token";
-import { ServerNetworkStatusStore } from "../../application/contract/network-status-store.type";
-import { Observable } from "rxjs";
-import { NetworkStatus } from "../../application/contract/network-status.interface";
+import {Component, OnInit} from '@angular/core';
+import {first, Observable, shareReplay, switchMap} from "rxjs";
+import {NetworkStatus} from "../../application/contract/network-status.interface";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
+import {AddPeerServerHandler} from "../../application/handler/add-peer-server.handler";
+import {PeerServerStatusHandler} from "../../application/handler/peer-server-status.handler";
+import {StartServerHandler} from "../../application/handler/start-server.handler";
+import {ListPeerServerHandler} from "../../application/handler/list-peer-server.handler";
+import {PeerServer} from "@shared-kernel/database/application/contract/table/peer-servers.table";
 
 @Component({
   selector: 'app-network-dialog',
   templateUrl: './network-dialog.component.html',
   styleUrls: ['./network-dialog.component.css']
 })
-export class NetworkDialogComponent {
+export class NetworkDialogComponent implements OnInit {
 
-  protected networkStatus: Observable<NetworkStatus>;
-  public constructor(@Inject(SERVER_NETWORK_STATUS) private readonly store: ServerNetworkStatusStore) {
-    this.networkStatus = store.get();
+  protected networkStatus!: Observable<NetworkStatus>;
+  protected peerServerList!: Observable<PeerServer[]>;
+
+  public readonly networkForm = new FormGroup({
+    nickname: new FormControl('', { validators: [Validators.required], nonNullable: true }),
+  });
+
+  public constructor(
+    private readonly peerServerStatue: PeerServerStatusHandler,
+    private addPeerServer: AddPeerServerHandler,
+    private startServer: StartServerHandler,
+    private listServer: ListPeerServerHandler
+  ) {}
+
+  ngOnInit(): void {
+    // TODO takeUntil destroyed
+    this.networkStatus = this.peerServerStatue.handle().pipe(shareReplay());
+    this.peerServerList = this.listServer.handle().pipe(shareReplay());
+
+  }
+
+  protected submitNetworkForm() {
+    if (!this.networkForm.valid) {
+      this.networkForm.markAsTouched();
+      return;
+    }
+
+    this.addPeerServer.handle({
+      user: {
+        nickName: this.networkForm.controls.nickname.value
+      }
+    }).pipe(
+      first(),
+      switchMap(() => {
+        return this.listServer.handle()
+      })
+    ).subscribe((peerServers) => {
+      if (peerServers.length === 1) {
+        return this.startServer.handle(peerServers[0].turn)
+      }
+    })
   }
 }
