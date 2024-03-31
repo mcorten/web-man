@@ -1,0 +1,13 @@
+:host {
+  .network-status {
+    height: 15px;
+    width: 15px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+
+    &._connected {
+      background-color: green;
+    }
+  }
+}
