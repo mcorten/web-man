@@ -1,13 +1,10 @@
-import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
-import { PeerClient } from "@shared-kernel/peer-to-peer/peerClient";
-import { BehaviorSubject } from "rxjs";
-import { MatDialog } from "@angular/material/dialog";
-import { NetworkDialogComponent } from "./@peer-to-peer/view/network-dialog/network-dialog.component";
-import { NetworkStatus } from "./@peer-to-peer/application/contract/network-status.interface";
-import { StartServerHandler } from "./@peer-to-peer/application/handler/start-server.handler";
-import { SERVER_NETWORK_STATUS } from "./@peer-to-peer/application/contract/network-status-store.token";
-import { ServerNetworkStatusStore } from "./@peer-to-peer/application/contract/network-status-store.type";
-
+import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {MatDialog} from "@angular/material/dialog";
+import {NetworkDialogComponent} from "./@peer-to-peer/view/network-dialog/network-dialog.component";
+import {StartServerHandler} from "./@peer-to-peer/application/handler/start-server.handler";
+import {PeerServerStatusHandler} from "./@peer-to-peer/application/handler/peer-server-status.handler";
+import {ListPeerServerHandler} from "./@peer-to-peer";
+import {first} from "rxjs";
 
 
 @Component({
@@ -23,14 +20,24 @@ export class AppComponent implements OnInit {
 
   public constructor(
     private startServer: StartServerHandler,
-    @Inject(SERVER_NETWORK_STATUS) protected readonly networkStatusStore: ServerNetworkStatusStore,
-    public dialog: MatDialog
+    protected readonly networkStatusStore: PeerServerStatusHandler,
+    public dialog: MatDialog,
+    private listServer: ListPeerServerHandler
   ) {
-    this.networkStatus = networkStatusStore.get();
+    this.networkStatus = networkStatusStore.handle(); // TODO take until
   }
 
   ngOnInit(): void {
-    // this.startServer.handle();
+    this.listServer.handle()
+      .pipe(
+        first()
+      )
+      .subscribe(peerServer => {
+        if (peerServer.length === 1) {
+          this.startServer.handle(peerServer[0].turn)
+        }
+      })
+
   }
 
   protected networkDialog() {

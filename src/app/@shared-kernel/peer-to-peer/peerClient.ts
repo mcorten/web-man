@@ -2,6 +2,8 @@ import Peer from "peerjs";
 import { UserPeer } from "./user-peer";
 import { ServerPeer } from "./server-peer";
 import { Injectable } from "@angular/core";
+import {v4} from "uuid";
+import {PeerServer} from "@shared-kernel/database/application/contract/table/peer-servers.table";
 
 interface PeerClientEvents  {
   onConnectToServer: (connectId: string) => void,
@@ -23,9 +25,12 @@ export class PeerClient {
     this.events = events;
   }
 
-  public initialize() {
-    // const peer = new Peer({debug: 3});
-    const peer = new Peer();
+  public initialize(turnServer: PeerServer['turn']) {
+    const peer = new Peer(v4(),{
+      host: turnServer.url,
+      secure: true,
+      path: '/turn'
+    });
     this.peer = peer;
 
     peer.on("open", (id) => {
