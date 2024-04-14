@@ -25,8 +25,8 @@ export class PeerClient {
     this.events = events;
   }
 
-  public initialize(turnServer: PeerServer['turn']) {
-    const peer = new Peer(v4(),{
+  public initialize(connectionId: string, turnServer: PeerServer['turn']) {
+    const peer = new Peer(connectionId,{
       host: turnServer.url,
       secure: true,
       path: '/turn'
@@ -48,7 +48,15 @@ export class PeerClient {
 
           this.events.onClientConnected(id);
         }
+
       });
+    })
+    peer.on('error', (e) => {
+      if (e.message.includes('ID') && e.message.includes('is taken')) { // ID already taken
+
+      }
+
+      console.error(this.constructor.name,'error', e.message);
     })
   }
 

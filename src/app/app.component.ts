@@ -34,7 +34,7 @@ export class AppComponent implements OnInit {
       )
       .subscribe(peerServer => {
         if (peerServer.length === 1) {
-          this.startServer.handle(peerServer[0].turn)
+          this.startServer.handle(peerServer[0])
         }
       })
 

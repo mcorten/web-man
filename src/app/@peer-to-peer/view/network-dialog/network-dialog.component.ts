@@ -53,7 +53,8 @@ export class NetworkDialogComponent implements OnInit {
       })
     ).subscribe((peerServers) => {
       if (peerServers.length === 1) {
-        return this.startServer.handle(peerServers[0].turn)
+        const peerServer = peerServers[0];
+        return this.startServer.handle(peerServer);
       }
     })
   }
