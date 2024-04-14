@@ -12,7 +12,8 @@ export class StartServerHandler {
   ) {
   }
 
-  public handle(turnServer: PeerServer['turn']) {
+  public handle(peer: PeerServer ) {
+
     this.peerClient.onEvent({
       onConnectToServer: (connectId) => {
         this.store.set({
@@ -23,8 +24,7 @@ export class StartServerHandler {
       onClientConnected: (id) => {
         this.peerClient.sendMessage(id, 'welcome');
       }
-
     })
-    this.peerClient.initialize(turnServer);
+    this.peerClient.initialize(peer.user.connectionId, peer.turn);
   }
 }
