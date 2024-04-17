@@ -6,7 +6,7 @@ export interface PeerServerCreate {
     authPassword: string,
   },
   user: {
-    connectionId: string,
+    networkId: string,
     nickName: string
   }
 }

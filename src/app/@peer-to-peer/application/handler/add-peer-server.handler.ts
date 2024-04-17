@@ -15,7 +15,7 @@ export class AddPeerServerHandler {
   public handle(contract: {user: Pick<PeerServerCreate['user'], 'nickName'>}): Observable<number> {
     const defaults: {
       turn: PeerServerCreate['turn']
-      user: Pick<PeerServerCreate['user'], 'connectionId'>
+      user: Pick<PeerServerCreate['user'], 'networkId'>
     } = {
       turn: {
         url: 'turn.web-man.eu',
@@ -23,7 +23,7 @@ export class AddPeerServerHandler {
         authPassword: ''
       },
       user: {
-        connectionId: uuidv4()
+        networkId: uuidv4()
       },
     }
 

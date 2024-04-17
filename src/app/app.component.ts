@@ -4,7 +4,7 @@ import {NetworkDialogComponent} from "./@peer-to-peer/view/network-dialog/networ
 import {StartServerHandler} from "./@peer-to-peer/application/handler/start-server.handler";
 import {PeerServerStatusHandler} from "./@peer-to-peer/application/handler/peer-server-status.handler";
 import {ListPeerServerHandler} from "./@peer-to-peer";
-import {first} from "rxjs";
+import {first, tap} from "rxjs";
 
 
 @Component({
@@ -22,9 +22,9 @@ export class AppComponent implements OnInit {
     private startServer: StartServerHandler,
     protected readonly networkStatusStore: PeerServerStatusHandler,
     public dialog: MatDialog,
-    private listServer: ListPeerServerHandler
+    private listServer: ListPeerServerHandler,
   ) {
-    this.networkStatus = networkStatusStore.handle(); // TODO take until
+    this.networkStatus = networkStatusStore.handle();
   }
 
   ngOnInit(): void {
