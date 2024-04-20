@@ -21,6 +21,7 @@
   <mat-divider></mat-divider>
 
   <ng-container *ngIf="peerServerList | async as _peerServerList">
+    <!-- Form to setup network -->
     <ng-container *ngIf="_peerServerList.length === 0">
       <h3>Network details</h3>
       <form class="network"
@@ -34,6 +35,33 @@
         <button mat-raised-button [type]="'submit'" [color]="'primary'">Save network</button>
       </form>
     </ng-container>
+
+    <!-- form to connect to other users  -->
+    <ng-container *ngIf="_peerServerList.length === 1">
+      <h3>Network users</h3>
+      <form class="network"
+            [formGroup]="connectForm"
+            (ngSubmit)="submitConnectForm()"
+      >
+        <mat-form-field >
+          <mat-label>Connection ID</mat-label>
+          <input matInput [formControl]="connectForm.controls.networkId" placeholder="Network ID"/>
+        </mat-form-field>
+        <button mat-raised-button [type]="'submit'" [color]="'primary'">Connect</button>
+      </form>
+      <mat-divider></mat-divider>
+      <ng-container *ngIf="userList.get() | async as _userList">
+          <div *ngFor="let userId of _userList">
+            <ng-container *ngIf="userStatus.get(userId) | async as _user">
+              <span class="user-network-status"
+                    [class._connected]="_user.connectionStatues === 'connected'"
+              ></span>
+              {{ userId }}
+            </ng-container>
+          </div>
+      </ng-container>
+    </ng-container>
+
   </ng-container>
 </mat-dialog-content>
 <mat-dialog-actions>
