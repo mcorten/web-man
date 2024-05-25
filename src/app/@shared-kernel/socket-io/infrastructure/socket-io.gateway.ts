@@ -1,21 +1,23 @@
-import { io, Socket } from "socket.io-client";
-import { SocketIoGatewayContract } from "../application/contract/gateway.contract";
-import { BehaviorSubject } from "rxjs";
-import { Inject } from "@angular/core";
-import { HISTORY_STORE_LIST, HistoryStore } from "@shared-kernel/socket-io";
+import {io, Socket} from "socket.io-client";
+import {SocketIoGatewayContract} from "../application/contract/gateway.contract";
+import {BehaviorSubject} from "rxjs";
+import {Inject} from "@angular/core";
+import {HISTORY_STORE_LIST, HistoryStore} from "@shared-kernel/socket-io";
 import {
   HistoryRecord,
   HistoryRecordConnection,
   HistoryRecordMessage
 } from "../application/contract/history-message.interface";
-import { v4 as uuidv4 } from "uuid";
-import { HISTORY_DETAIL_STORE } from "../application/contract/history-store-detail.token";
-import { HistoryDetailStore } from "../application/contract/history-store-detail.type";
-import { isHistoryRecordConnection } from "../../../@socket-io/view/messages/messages.component";
+import {v4 as uuidv4} from "uuid";
+import {HISTORY_DETAIL_STORE} from "../application/contract/history-store-detail.token";
+import {HistoryDetailStore} from "../application/contract/history-store-detail.type";
+import {isHistoryRecordConnection} from "../../../@socket-io/view/messages/messages.component";
+import {ManagerOptions} from "socket.io-client/build/esm/manager";
+import {SocketOptions} from "socket.io-client/build/esm/socket";
 
 export type socketHealth = 'connected' | 'connecting' | 'disconnected';
 
-export class SocketIoGateway implements SocketIoGatewayContract{
+export class SocketIoGateway implements SocketIoGatewayContract {
   private connection!: Socket;
 
   private readonly _health = new BehaviorSubject<socketHealth>("disconnected");
@@ -32,7 +34,10 @@ export class SocketIoGateway implements SocketIoGatewayContract{
   private current_reconnect_attempts = this.current_reconnect_attempts_default;
 
   public connect(contract: {
-    host: string
+    host: string,
+    options: {
+      'auth.token': string
+    }
   }) {
     this._health.next('connecting');
 
@@ -40,9 +45,18 @@ export class SocketIoGateway implements SocketIoGatewayContract{
       this.connection.disconnect();
     }
 
-    this.connection = io(contract.host, {
+    const options: Partial<ManagerOptions & SocketOptions> = {
       reconnectionAttempts: this.reconnect_attempts
-    });
+    }
+
+    const authToken = contract.options['auth.token'];
+    if (authToken.length > 0) {
+      options.auth = {
+        token: authToken
+      }
+    }
+
+    this.connection = io(contract.host, options);
 
     this.connection.on('connect', () => {
       this.current_reconnect_attempts = 0;
@@ -89,7 +103,7 @@ export class SocketIoGateway implements SocketIoGatewayContract{
 
     this.connection.onAny((event, message) => {
       const makeHistory: HistoryRecordMessage = {
-        type:'message',
+        type: 'message',
         id: uuidv4(),
         reply: {
           event: event,

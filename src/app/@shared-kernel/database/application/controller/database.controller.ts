@@ -4,8 +4,7 @@ import {Server, ServerCreate} from "../contract/table/server.table";
 import {Message, MessageCreate} from "@shared-kernel/database";
 import {Md5} from "ts-md5";
 import {Label, LabelCreate} from "../contract/table/label.table";
-import { PeerServer, PeerServerCreate } from "../contract/table/peer-servers.table";
-import {v4 as uuidv4} from "uuid";
+import {PeerServer, PeerServerCreate} from "../contract/table/peer-servers.table";
 
 
 export class Database extends Dexie {
@@ -42,6 +41,13 @@ export class Database extends Dexie {
     this.version(6).stores({
       'peer-servers': '++id,  turn, user'
     })
+    this.version(7).stores({
+      servers: '++id, host, name, options',
+    }).upgrade(trans => {
+      return trans.table("servers").toCollection().modify((server: Server) => {
+        server.options = { "auth.token": '' }
+      })
+    });
 
     this._servers = this.table('servers');
     this._messages = this.table('messages');

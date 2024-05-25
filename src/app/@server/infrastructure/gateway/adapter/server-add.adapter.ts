@@ -11,6 +11,7 @@ export class ServerAddAdapter {
     return this.storage.servers().add({
       name: useCase.name,
       host: useCase.host,
+      options: useCase.options
     })
   }
 }

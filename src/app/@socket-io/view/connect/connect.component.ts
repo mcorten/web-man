@@ -4,7 +4,7 @@ import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatInputModule} from "@angular/material/input";
 import {MatButtonModule} from "@angular/material/button";
 import {SocketIoGateway} from "@shared-kernel/socket-io/infrastructure/socket-io.gateway";
-import {Database, DATABASE, ServerCreate} from "@shared-kernel/database";
+import {Database, DATABASE, ServerCreate, ServerOptions} from "@shared-kernel/database";
 import {combineLatest, filter, first, map, Observable, of, switchMap} from "rxjs";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {AsyncPipe, NgForOf, NgIf} from "@angular/common";
@@ -51,6 +51,7 @@ export class ConnectComponent implements OnInit {
   protected connectForm = new FormGroup({
       name: new FormControl('', {nonNullable: true}),
       host: new FormControl('', {nonNullable: true, validators: [Validators.required]}),
+      authToken: new FormControl('', {nonNullable: true, validators: []}),
     }
   )
 
@@ -115,18 +116,27 @@ export class ConnectComponent implements OnInit {
     if (name.length === 0) {
       name = host;
     }
+    const options: ServerOptions = {
+      "auth.token": this.connectForm.controls.authToken.value
+    }
 
-    this.storeHostIfNotFound(name, host)
+
+    this.storeHostIfNotFound(name, host, options)
       .subscribe((v) => {
-        this.connect(host)
+        this.connect(host, options["auth.token"])
       })
   }
 
-  connectFromHistory(server: ServerCreate) {
+  private updateFormFromServer(server: ServerCreate) {
     this.connectForm.controls.host.setValue(server.host);
     this.connectForm.controls.name.setValue(server.name);
+    this.connectForm.controls.authToken.setValue(server.options["auth.token"]);
+  }
 
-    this.connect(server.host)
+  connectFromHistory(server: ServerCreate) {
+    this.updateFormFromServer(server);
+
+    this.connect(server.host, server.options["auth.token"])
   }
 
   removeHistory(id: number) {
@@ -134,21 +144,23 @@ export class ConnectComponent implements OnInit {
     })
   }
 
-
-  connect(host: string) {
+  connect(host: string, authToken: string) {
     this.connection.connect({
-      host: host
+      host: host,
+      options: {
+        'auth.token': authToken
+      }
     })
   }
 
-  private storeHostIfNotFound(name: string, host: string) {
+  private storeHostIfNotFound(name: string, host: string, options: ServerOptions) {
     return this.database.servers()
       .findOne({host})
       .pipe(
         first(),
         switchMap(v => {
           if (v === undefined) {
-            return this.serverAdd.handle(new ServerAddUseCase(host, name))
+            return this.serverAdd.handle(new ServerAddUseCase(host, name, options))
           }
 
           return of(v);
