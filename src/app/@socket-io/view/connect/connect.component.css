@@ -35,4 +35,8 @@
     }
   }
 
+  div.mat-expansion-panel-body {
+    padding: 0px 5px;
+  }
+
 }

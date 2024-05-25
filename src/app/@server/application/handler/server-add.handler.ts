@@ -25,6 +25,7 @@ export class ServerAddHandler {
               id: serverId,
               host: useCase.host,
               name: useCase.name,
+              options: useCase.options
             },
             serverId.toString()
           )

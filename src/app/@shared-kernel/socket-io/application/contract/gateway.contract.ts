@@ -1,8 +1,7 @@
-import {io} from "socket.io-client";
-
 export interface SocketIoGatewayContract {
   connect: (contract: {
     host: string
+    options: ConnectOptions
   }) => void
 
   request: (contract: {
@@ -10,4 +9,8 @@ export interface SocketIoGatewayContract {
     body: unknown,
     acknowledge?: (response: unknown) => void
   }) => void
+}
+
+interface ConnectOptions{
+  'auth.token': string
 }

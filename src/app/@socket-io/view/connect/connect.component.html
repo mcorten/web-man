@@ -20,14 +20,35 @@
         placeholder="Ex. Websocket example">
     </mat-form-field>
 
-    <div style="position: relative;">
+    <mat-accordion multi displayMode="flat">
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Connection options
+          </mat-panel-title>
+
+        </mat-expansion-panel-header>
+
+        <mat-form-field style="width: 100%">
+          <mat-label>Auth token</mat-label>
+          <input
+            matInput
+            style="width: 100%"
+            type="text"
+            [formControl]="connectForm.controls.authToken"
+            placeholder="Ex. auth.token">
+        </mat-form-field>
+
+      </mat-expansion-panel>
+    </mat-accordion>
+
+    <div style="position: relative; margin-top: 10px;">
       <button
         mat-raised-button
         color="primary"
+        class="full-width"
 
         [disabled]="(loading | async) ?? false"
-
-        style="width: 100%;"
       >
         Connect
       </button>
