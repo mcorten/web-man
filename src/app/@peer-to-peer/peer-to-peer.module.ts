@@ -24,6 +24,8 @@ import { PEER_USER_LIST_STORE } from "./application/contract/user-connected-list
 import { PeerUserListStore } from "./application/contract/user-connected-list-store.type";
 import { PEER_USER_STATUS_STORE } from "./application/contract/peer-user-status-store.token";
 import { PeerUserStatusStore } from "./application/contract/peer-user-status.store";
+import { AddPeerServerConnectionAdapter } from "./infrastructure/gateway/adapter/add-peer-server-connection.adapter";
+import { CurrentPeerServerAdapter } from "./infrastructure/gateway/adapter/current-peer-server.adapter";
 
 @NgModule({
   imports: [MatButtonModule, MatDialogModule, AsyncPipe, NgIf, MatListModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, NgForOf, JsonPipe],
@@ -33,10 +35,14 @@ import { PeerUserStatusStore } from "./application/contract/peer-user-status.sto
     MatDialogClose,
     PeerClient,
 
+    AddPeerServerConnectionAdapter,
+
     AddPeerServerAdapter,
     AddPeerServerHandler,
 
     ConnectToUserHandler,
+
+    CurrentPeerServerAdapter,
 
     ListPeerServerAdapter,
     ListPeerServerHandler,

@@ -37,6 +37,7 @@ export class AddPeerServerHandler {
                 ...defaults.user,
                 nickName: contract.user.nickName,
               },
+              user_connection: []
             });
           }
 
