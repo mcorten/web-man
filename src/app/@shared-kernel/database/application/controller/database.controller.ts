@@ -1,10 +1,10 @@
-import Dexie, {Table} from "dexie";
-import {defer, from, map, Observable, of, switchMap} from "rxjs";
-import {Server, ServerCreate} from "../contract/table/server.table";
-import {Message, MessageCreate} from "@shared-kernel/database";
-import {Md5} from "ts-md5";
-import {Label, LabelCreate} from "../contract/table/label.table";
-import {PeerServer, PeerServerCreate} from "../contract/table/peer-servers.table";
+import Dexie, { Table } from "dexie";
+import { defer, from, map, Observable, of, switchMap, throwError } from "rxjs";
+import { Server, ServerCreate } from "../contract/table/server.table";
+import { Message, MessageCreate } from "@shared-kernel/database";
+import { Md5 } from "ts-md5";
+import { Label, LabelCreate } from "../contract/table/label.table";
+import { PeerServer, PeerServerUserConnection, PeerServerCreate } from "../contract/table/peer-servers.table";
 
 
 export class Database extends Dexie {
@@ -45,7 +45,14 @@ export class Database extends Dexie {
       servers: '++id, host, name, options',
     }).upgrade(trans => {
       return trans.table("servers").toCollection().modify((server: Server) => {
-        server.options = { "auth.token": '' }
+        server.options = {"auth.token": ''}
+      })
+    });
+    this.version(8).stores({
+      'peer-servers': '++id,  turn, user, user_connection'
+    }).upgrade(trans => {
+      return trans.table("peer-servers").toCollection().modify((peerServer: PeerServer) => {
+        peerServer.user_connection = []
       })
     });
     this.version(8).upgrade(trans => {
@@ -137,6 +144,22 @@ export class Database extends Dexie {
         return defer(() => from(
           this._peerServers.add(peerServer)
         ))
+      },
+      addConnection: (peerServer: PeerServer, userConnection: PeerServerUserConnection): Observable<boolean> => {
+        const alreadyConnected = peerServer.user_connection.find(_connection => _connection.connectionId === userConnection.connectionId)
+        if (alreadyConnected) {
+          return throwError(() => 'Already connected');
+        }
+
+        return defer(
+          () => from(
+            this._peerServers.update(peerServer.id, {
+              user_connection: [...peerServer.user_connection].concat([userConnection])
+            }).then(affected => {
+              return affected === 1;
+            })
+          )
+        );
       },
       list: (): Observable<PeerServer[]> => {
         return defer(() => from(
