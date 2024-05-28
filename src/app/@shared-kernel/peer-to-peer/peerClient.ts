@@ -88,7 +88,7 @@ export class PeerClient {
     })
   }
 
-  public connect(id: string) {
+  public connect(id: string): void {
     const onClientConnected = this.events.onClientConnected ?? this.onClientConnectedDefault; // TODO this is a duplicate from above here, fix the duplication
     const onClientDisconnected = this.events.onClientDisconnected ?? this.onClientDisconnectedDefault;
 
