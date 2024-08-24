@@ -8,11 +8,16 @@ import {PEER_USER_STATUS_STORE} from "../../@peer-to-peer/application/contract/p
 import {PeerUserStatusStore} from "../../@peer-to-peer/application/contract/peer-user-status.store";
 import {PEER_USER_LIST_STORE} from "../../@peer-to-peer/application/contract/user-connected-list-store.token";
 import {PeerUserListStore} from "../../@peer-to-peer/application/contract/user-connected-list-store.type";
-
-interface PeerClientEvents {
+interface  PeerServerEvents {
   onConnectToTurnServer?: (connectId: string) => void,
   onClientConnected?: (id: string) => void,
   onClientDisconnected?: (id: string) => void,
+}
+
+
+interface PeerClientEvents {
+  onConnect?: (id: string) => void,
+  onDisconnect?: (id: string) => void,
 }
 
 @Injectable()
@@ -25,7 +30,6 @@ export class PeerClient {
   private onConnectToTurnServerDefault = (connectId: string) => console.log(this.constructor.name, 'onConnectToTurnServerDefault');
   private onClientConnectedDefault = (connectId: string) => console.log(this.constructor.name, 'onClientConnectedDefault');
   private onClientDisconnectedDefault = (connectId: string) => console.log(this.constructor.name, 'onClientDisconnectedDefault');
-  private events: PeerClientEvents = {}
 
   public constructor(
     @Inject(PEER_USER_LIST_STORE) private readonly userList: PeerUserListStore,
@@ -34,11 +38,7 @@ export class PeerClient {
   }
 
 
-  public onEvent(events: PeerClientEvents): void {
-    this.events = events;
-  }
-
-  public initialize(connectionId: string, turnServer: PeerServer['turn']) {
+  public initialize(connectionId: string, turnServer: PeerServer['turn'], events: PeerServerEvents) {
     const peer = new Peer(connectionId, {
       host: turnServer.url,
       secure: true,
@@ -46,8 +46,8 @@ export class PeerClient {
     });
     this.peer = peer;
 
-    const onConnectToTurnServer = this.events.onConnectToTurnServer ?? this.onConnectToTurnServerDefault;
-    const onClientConnected = this.events.onClientConnected ?? this.onClientConnectedDefault;
+    const onConnectToTurnServer = events.onConnectToTurnServer ?? this.onConnectToTurnServerDefault;
+    const onClientConnected = events.onClientConnected ?? this.onClientConnectedDefault;
 
     peer.on("open", (id) => {
       console.warn("open 1", id);
@@ -88,9 +88,9 @@ export class PeerClient {
     })
   }
 
-  public connect(id: string): void {
-    const onClientConnected = this.events.onClientConnected ?? this.onClientConnectedDefault; // TODO this is a duplicate from above here, fix the duplication
-    const onClientDisconnected = this.events.onClientDisconnected ?? this.onClientDisconnectedDefault;
+  public connect(id: string, events: PeerClientEvents): void {
+    const onClientConnected = events.onConnect ?? this.onClientConnectedDefault; // TODO this is a duplicate from above here, fix the duplication
+    const onClientDisconnected = events.onDisconnect ?? this.onClientDisconnectedDefault;
 
     const user = new UserPeer(this.peer.connect(id));
     user.initialize({

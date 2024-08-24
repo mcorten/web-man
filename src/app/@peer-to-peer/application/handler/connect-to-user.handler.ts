@@ -52,7 +52,10 @@ export class ConnectToUserHandler {
           );
         }),
         map(() => {
-          return this.peerClient.connect(contract.connectionId);
+          return this.peerClient.connect(contract.connectionId, {
+            onConnect: id => {},
+            onDisconnect: id => {}
+          });
         })
       )
   }

@@ -32,7 +32,7 @@ export class StartServerHandler {
     //   )
     //   .subscribe(_value => {})
 
-    this.peerClient.onEvent({
+    this.peerClient.initialize(peer.user.networkId, peer.turn, {
       onConnectToTurnServer: (connectId) => {
         this.store.set({
           status: 'connected',
@@ -44,7 +44,6 @@ export class StartServerHandler {
       },
       onClientDisconnected: (connectId) => {
       }
-    })
-    this.peerClient.initialize(peer.user.networkId, peer.turn);
+    });
   }
 }

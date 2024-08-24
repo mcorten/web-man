@@ -48,13 +48,6 @@ export class Database extends Dexie {
         server.options = {"auth.token": ''}
       })
     });
-    this.version(8).stores({
-      'peer-servers': '++id,  turn, user, user_connection'
-    }).upgrade(trans => {
-      return trans.table("peer-servers").toCollection().modify((peerServer: PeerServer) => {
-        peerServer.user_connection = []
-      })
-    });
     this.version(8).upgrade(trans => {
       return trans.table("peer-servers").toCollection().modify((server: PeerServer) => {
         // we renamed connectionId to networkId
@@ -62,6 +55,13 @@ export class Database extends Dexie {
           server.user.networkId = server.user.connectionId;
           delete server.user.connectionId;
         }
+      })
+    });
+    this.version(9).stores({
+      'peer-servers': '++id,  turn, user, user_connection'
+    }).upgrade(trans => {
+      return trans.table("peer-servers").toCollection().modify((peerServer: PeerServer) => {
+        peerServer.user_connection = []
       })
     });
 
