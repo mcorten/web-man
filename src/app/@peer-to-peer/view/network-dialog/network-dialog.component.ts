@@ -83,7 +83,7 @@ export class NetworkDialogComponent implements OnInit {
 
     this.connectToUser.handle({
       connectionId: this.connectForm.controls.networkId.value
-    })
-
+    }).pipe(first())
+      .subscribe();
   }
 }
