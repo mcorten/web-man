@@ -40,13 +40,14 @@ export class ConnectToUserHandler {
           }
         }),
         switchMap(_peerServer => {
-          const userAlreadyAsConnection = _peerServer.user_connection.find(_user => _user.connectionId === contract.connectionId)
+          const userAlreadyAsConnection = _peerServer.user_connection.find(_user => _user.networkId === contract.connectionId)
           if (userAlreadyAsConnection) {
             return of(_peerServer);
           }
 
           return this.addPeerConnection.handle(_peerServer, {
-            connectionId: contract.connectionId
+            networkId: contract.connectionId,
+            nickName: contract.connectionId
           }).pipe(
             first()
           );

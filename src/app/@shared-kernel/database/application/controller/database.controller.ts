@@ -64,6 +64,19 @@ export class Database extends Dexie {
         peerServer.user_connection = []
       })
     });
+    this.version(10).upgrade(trans => {
+      return trans.table("peer-servers").toCollection().modify((peerServer: PeerServer) => {
+        peerServer.user_connection.map(userConnection => {
+          // renamed connectionId with networkId because peerServers.user also contains a networkId (witch is the id of the local client)
+          if ('connectionId' in userConnection && typeof userConnection.connectionId === 'string' && userConnection.connectionId.length > 0) {
+            userConnection.networkId = userConnection.connectionId;
+            delete userConnection.connectionId;
+          }
+
+          userConnection.nickName = userConnection.networkId;
+        })
+      })
+    });
 
     this._servers = this.table('servers');
     this._messages = this.table('messages');
@@ -146,7 +159,7 @@ export class Database extends Dexie {
         ))
       },
       addConnection: (peerServer: PeerServer, userConnection: PeerServerUserConnection): Observable<boolean> => {
-        const alreadyConnected = peerServer.user_connection.find(_connection => _connection.connectionId === userConnection.connectionId)
+        const alreadyConnected = peerServer.user_connection.find(_connection => _connection.networkId === userConnection.networkId)
         if (alreadyConnected) {
           return throwError(() => 'Already connected');
         }

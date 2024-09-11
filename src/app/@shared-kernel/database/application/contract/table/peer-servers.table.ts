@@ -20,5 +20,6 @@ export interface PeerServer {
 }
 
 export interface PeerServerUserConnection {
-  connectionId: string
+  networkId: string
+  nickName: string
 }

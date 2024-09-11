@@ -5,6 +5,8 @@ import { PeerClient } from "@shared-kernel/peer-to-peer/peerClient";
 import { PeerServer } from "@shared-kernel/database/application/contract/table/peer-servers.table";
 import { ConnectToUserHandler } from "./connect-to-user.handler";
 import { combineLatest, combineLatestAll, filter, switchMap, takeWhile, tap } from "rxjs";
+import {Message, RequestContract} from "@shared-kernel/async-communication/contract/request.contract";
+import {Async} from "@shared-kernel/async-communication/async";
 
 @Injectable()
 export class StartServerHandler {
@@ -32,6 +34,7 @@ export class StartServerHandler {
     //   )
     //   .subscribe(_value => {})
 
+    const async = new Async();
     this.peerClient.initialize(peer.user.networkId, peer.turn, {
       onConnectToTurnServer: (connectId) => {
         this.store.set({
@@ -40,7 +43,14 @@ export class StartServerHandler {
         })
       },
       onClientConnected: (id) => {
-        this.peerClient.sendMessage(id, 'welcome');
+        const message: Message<RequestContract> = async.request({
+          request: { uid: 'GetNickName' },
+          body: {}
+        }, () => {
+          console.log('reply received')
+        })
+
+        this.peerClient.sendMessage(id, message);
       },
       onClientDisconnected: (connectId) => {
       }
